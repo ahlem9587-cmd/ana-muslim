@@ -14,32 +14,12 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.0'
           channel: stable
 
       - name: Create Android project files
-        run: flutter create --platforms=android --project-name im_muslim .
+        run: flutter create . --platforms=android
 
-      - name: Set app name
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          p = Path("android/app/src/main/AndroidManifest.xml")
-          s = p.read_text()
-
-          s = re.sub(
-              r'android:label="[^"]*"',
-              'android:label="I\'m Muslim"',
-              s,
-              count=1
-          )
-
-          p.write_text(s)
-          PY
-
-      - name: Get packages
+      - name: Get dependencies
         run: flutter pub get
 
       - name: Build APK
