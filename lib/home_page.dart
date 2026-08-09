@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'recitations_page.dart';
+import 'quran_page.dart';
 
 class HomePage extends StatelessWidget {
   final String language;
@@ -108,10 +109,21 @@ class HomePage extends StatelessWidget {
 
               const SizedBox(height: 30),
 
+              // القرآن الكريم
               _menuButton(
                 context,
                 Icons.menu_book,
                 t['quran']!,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => QuranPage(
+                        language: language,
+                      ),
+                    ),
+                  );
+                },
               ),
 
               _menuButton(
@@ -183,13 +195,14 @@ class HomePage extends StatelessWidget {
   Widget _menuButton(
     BuildContext context,
     IconData icon,
-    String text,
-  ) {
+    String text, {
+    VoidCallback? onTap,
+  }) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       child: ElevatedButton.icon(
-        onPressed: () {},
+        onPressed: onTap ?? () {},
         icon: Icon(icon),
         label: Text(
           text,
