@@ -1,148 +1,170 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
-class RecitationsPage extends StatelessWidget {
-  final String language;
+class RecitationsPage extends StatefulWidget {
+  const RecitationsPage({super.key});
 
-  const RecitationsPage({
-    super.key,
-    required this.language,
-  });
+  @override
+  State<RecitationsPage> createState() => _RecitationsPageState();
+}
 
-  Map<String, String> get texts {
-    switch (language) {
-      case 'en':
-        return {
-          'title': 'Recitations',
-          'record': 'Record your recitation',
-          'choose': 'Choose a Surah',
-          'easy': 'Easy verses',
-          'listen': 'Listen to recitations',
-          'noRecitations': 'No recitations yet',
-        };
+class _RecitationsPageState extends State<RecitationsPage> {
+  CameraController? _cameraController;
+  List<CameraDescription> _cameras = [];
 
-      case 'fr':
-        return {
-          'title': 'Récitations',
-          'record': 'Enregistrer votre récitation',
-          'choose': 'Choisir une sourate',
-          'easy': 'Versets faciles',
-          'listen': 'Écouter les récitations',
-          'noRecitations': 'Aucune récitation pour le moment',
-        };
+  bool _isReady = false;
+  bool _isRecording = false;
 
-      case 'tr':
-        return {
-          'title': 'Tilavetler',
-          'record': 'Tilavetini kaydet',
-          'choose': 'Sure seç',
-          'easy': 'Kolay ayetler',
-          'listen': 'Tilavetleri dinle',
-          'noRecitations': 'Henüz tilavet yok',
-        };
+  @override
+  void initState() {
+    super.initState();
+    _startCamera();
+  }
 
-      default:
-        return {
-          'title': 'مجلس التلاوة',
-          'record': 'سجّل تلاوتك',
-          'choose': 'اختر سورة',
-          'easy': 'آيات سهلة',
-          'listen': 'استمع إلى التلاوات',
-          'noRecitations': 'لا توجد تلاوات بعد',
-        };
+  Future<void> _startCamera() async {
+    try {
+      _cameras = await availableCameras();
+
+      if (_cameras.isEmpty) {
+        return;
+      }
+
+      final camera = _cameras.firstWhere(
+        (camera) => camera.lensDirection == CameraLensDirection.front,
+        orElse: () => _cameras.first,
+      );
+
+      _cameraController = CameraController(
+        camera,
+        ResolutionPreset.medium,
+        enableAudio: true,
+      );
+
+      await _cameraController!.initialize();
+
+      if (mounted) {
+        setState(() {
+          _isReady = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Camera error: $e');
+    }
+  }
+
+  Future<void> _toggleRecording() async {
+    if (_cameraController == null ||
+        !_cameraController!.value.isInitialized) {
+      return;
+    }
+
+    if (_isRecording) {
+      final video = await _cameraController!.stopVideoRecording();
+
+      if (mounted) {
+        setState(() {
+          _isRecording = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم حفظ التلاوة بنجاح 🎙️'),
+          ),
+        );
+      }
+
+      debugPrint('Recorded video: ${video.path}');
+    } else {
+      await _cameraController!.startVideoRecording();
+
+      if (mounted) {
+        setState(() {
+          _isRecording = true;
+        });
+      }
     }
   }
 
   @override
+  void dispose() {
+    _cameraController?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final t = texts;
-    final isArabic = language == 'ar' || language == 'ur';
-
-    return Directionality(
-      textDirection:
-          isArabic ? TextDirection.rtl : TextDirection.ltr,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(t['title']!),
-          centerTitle: true,
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                color: Theme.of(context)
-                    .colorScheme
-                    .primaryContainer,
-              ),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.menu_book,
-                    size: 60,
-                  ),
-                  const SizedBox(height: 15),
-                  Text(
-                    t['record']!,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 18),
-                  ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.videocam),
-                    label: Text(t['record']!),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            ListTile(
-              leading: const Icon(Icons.menu_book),
-              title: Text(t['choose']!),
-              trailing:
-                  const Icon(Icons.arrow_forward_ios),
-              onTap: () {},
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.auto_awesome),
-              title: Text(t['easy']!),
-              trailing:
-                  const Icon(Icons.arrow_forward_ios),
-              onTap: () {},
-            ),
-
-            const SizedBox(height: 15),
-
-            Text(
-              t['listen']!,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            Card(
-              child: ListTile(
-                leading: const CircleAvatar(
-                  child: Icon(Icons.person),
-                ),
-                title: Text(t['noRecitations']!),
-                subtitle: const Text('🎧'),
-              ),
-            ),
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('مجلس التلاوة'),
+        centerTitle: true,
       ),
+      body: !_isReady
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : Stack(
+              children: [
+                SizedBox.expand(
+                  child: CameraPreview(_cameraController!),
+                ),
+
+                Positioned(
+                  top: 20,
+                  left: 20,
+                  right: 20,
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Text(
+                      'اعرض تلاوتك على المسلمين 📖',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
+                Positioned(
+                  bottom: 35,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: _toggleRecording,
+                      child: Container(
+                        width: 75,
+                        height: 75,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _isRecording
+                              ? Colors.red
+                              : Colors.white,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 5,
+                          ),
+                        ),
+                        child: Icon(
+                          _isRecording
+                              ? Icons.stop
+                              : Icons.mic,
+                          size: 38,
+                          color: _isRecording
+                              ? Colors.white
+                              : Colors.green,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
