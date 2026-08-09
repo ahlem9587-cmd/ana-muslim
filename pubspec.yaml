@@ -10,11 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  camera: ^0.11.2+1
-  record: ^6.0.0
 
-flutter:
-  uses-material-design: true
 flutter:
   uses-material-design: true
 
