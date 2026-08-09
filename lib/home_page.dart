@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'recitations_page.dart';
 
 class HomePage extends StatelessWidget {
   final String language;
@@ -10,17 +11,6 @@ class HomePage extends StatelessWidget {
 
   Map<String, String> get texts {
     switch (language) {
-      case 'ar':
-        return {
-          'title': 'أنا مسلم',
-          'welcome': 'مرحبًا بك في تطبيق أنا مسلم',
-          'quran': 'القرآن الكريم',
-          'prayer': 'أوقات الصلاة',
-          'dhikr': 'الأذكار',
-          'tasbeeh': 'المسبحة',
-          'profile': 'الملف الشخصي',
-        };
-
       case 'en':
         return {
           'title': "I'm Muslim",
@@ -30,6 +20,8 @@ class HomePage extends StatelessWidget {
           'dhikr': 'Dhikr',
           'tasbeeh': 'Tasbeeh',
           'profile': 'Profile',
+          'recitations': 'Recitation Majlis',
+          'recitationsSub': 'Share and listen to Quran recitations',
         };
 
       case 'fr':
@@ -41,6 +33,8 @@ class HomePage extends StatelessWidget {
           'dhikr': 'Dhikr',
           'tasbeeh': 'Tasbih',
           'profile': 'Profil',
+          'recitations': 'Majlis de récitation',
+          'recitationsSub': 'Partagez et écoutez des récitations',
         };
 
       case 'tr':
@@ -52,6 +46,8 @@ class HomePage extends StatelessWidget {
           'dhikr': 'Zikir',
           'tasbeeh': 'Tesbih',
           'profile': 'Profil',
+          'recitations': 'Tilavet Meclisi',
+          'recitationsSub': 'Tilavetleri paylaş ve dinle',
         };
 
       case 'ur':
@@ -63,28 +59,8 @@ class HomePage extends StatelessWidget {
           'dhikr': 'اذکار',
           'tasbeeh': 'تسبیح',
           'profile': 'پروفائل',
-        };
-
-      case 'id':
-        return {
-          'title': 'Saya Muslim',
-          'welcome': 'Selamat datang di Saya Muslim',
-          'quran': 'Al-Qur’an',
-          'prayer': 'Waktu Salat',
-          'dhikr': 'Dzikir',
-          'tasbeeh': 'Tasbih',
-          'profile': 'Profil',
-        };
-
-      case 'ms':
-        return {
-          'title': 'Saya Muslim',
-          'welcome': 'Selamat datang ke Saya Muslim',
-          'quran': 'Al-Quran',
-          'prayer': 'Waktu Solat',
-          'dhikr': 'Zikir',
-          'tasbeeh': 'Tasbih',
-          'profile': 'Profil',
+          'recitations': 'تلاوت کی مجلس',
+          'recitationsSub': 'تلاوتیں شیئر کریں اور سنیں',
         };
 
       default:
@@ -96,6 +72,8 @@ class HomePage extends StatelessWidget {
           'dhikr': 'الأذكار',
           'tasbeeh': 'المسبحة',
           'profile': 'الملف الشخصي',
+          'recitations': 'مجلس التلاوة',
+          'recitationsSub': 'شارك واستمع إلى تلاوات القرآن',
         };
     }
   }
@@ -103,7 +81,6 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = texts;
-
     final isArabic = language == 'ar' || language == 'ur';
 
     return Directionality(
@@ -132,28 +109,69 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 30),
 
               _menuButton(
+                context,
                 Icons.menu_book,
                 t['quran']!,
               ),
 
               _menuButton(
+                context,
                 Icons.access_time,
                 t['prayer']!,
               ),
 
               _menuButton(
+                context,
                 Icons.favorite,
                 t['dhikr']!,
               ),
 
               _menuButton(
+                context,
                 Icons.touch_app,
                 t['tasbeeh']!,
               ),
 
               _menuButton(
+                context,
                 Icons.person,
                 t['profile']!,
+              ),
+
+              const SizedBox(height: 8),
+
+              // مجلس التلاوة
+              Card(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16),
+                  leading: const Icon(
+                    Icons.menu_book,
+                    size: 38,
+                  ),
+                  title: Text(
+                    t['recitations']!,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    t['recitationsSub']!,
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RecitationsPage(
+                          language: language,
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -163,6 +181,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _menuButton(
+    BuildContext context,
     IconData icon,
     String text,
   ) {
