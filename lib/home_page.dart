@@ -4,7 +4,7 @@ class HomePage extends StatelessWidget {
   final String language;
 
   const HomePage({
-    super.ky,
+    super.key,
     required this.language,
   });
 
