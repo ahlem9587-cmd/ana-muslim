@@ -18,7 +18,26 @@ jobs:
           channel: stable
 
       - name: Create Android project files
-        run: flutter create --platforms=android --project-name ana_muslim .
+        run: flutter create --platforms=android --project-name im_muslim .
+
+      - name: Set app name
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+
+          s = re.sub(
+              r'android:label="[^"]*"',
+              'android:label="I\'m Muslim"',
+              s,
+              count=1
+          )
+
+          p.write_text(s)
+          PY
 
       - name: Get packages
         run: flutter pub get
@@ -29,5 +48,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ana-muslim-apk
+          name: im-muslim-apk
           path: build/app/outputs/flutter-apk/app-release.apk
