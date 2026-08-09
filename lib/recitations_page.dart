@@ -1,4 +1,6 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:record/record.dart';
 
 class RecitationsPage extends StatelessWidget {
   final String language;
@@ -18,7 +20,6 @@ class RecitationsPage extends StatelessWidget {
           'videoSub': 'Record your recitation with camera and sound',
           'audio': 'Voice Only',
           'audioSub': 'Record your recitation without camera',
-          'share': 'Share your recitation with others',
         };
 
       case 'fr':
@@ -29,7 +30,6 @@ class RecitationsPage extends StatelessWidget {
           'videoSub': 'Enregistrez avec la caméra et le son',
           'audio': 'Audio seulement',
           'audioSub': 'Enregistrez sans caméra',
-          'share': 'Partagez votre récitation avec les autres',
         };
 
       case 'tr':
@@ -40,7 +40,6 @@ class RecitationsPage extends StatelessWidget {
           'videoSub': 'Kamera ve ses ile tilavet kaydedin',
           'audio': 'Sadece Ses',
           'audioSub': 'Kamerasız tilavet kaydedin',
-          'share': 'Tilavetinizi başkalarıyla paylaşın',
         };
 
       case 'ur':
@@ -51,7 +50,6 @@ class RecitationsPage extends StatelessWidget {
           'videoSub': 'کیمرے اور آواز کے ساتھ تلاوت ریکارڈ کریں',
           'audio': 'صرف آواز',
           'audioSub': 'کیمرے کے بغیر تلاوت ریکارڈ کریں',
-          'share': 'اپنی تلاوت دوسروں کے ساتھ شیئر کریں',
         };
 
       default:
@@ -62,7 +60,6 @@ class RecitationsPage extends StatelessWidget {
           'videoSub': 'سجّل تلاوتك بالكاميرا والصوت',
           'audio': 'صوت فقط',
           'audioSub': 'سجّل تلاوتك بدون كاميرا',
-          'share': 'شارك تلاوتك مع الآخرين',
         };
     }
   }
@@ -104,7 +101,6 @@ class RecitationsPage extends StatelessWidget {
 
               const SizedBox(height: 30),
 
-              // صوت وصورة
               Card(
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
@@ -119,17 +115,16 @@ class RecitationsPage extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  subtitle: Text(
-                    t['videoSub']!,
-                  ),
+                  subtitle: Text(t['videoSub']!),
                   trailing: const Icon(
                     Icons.arrow_forward_ios,
                   ),
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          '${t['video']} - ${t['share']}',
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => VideoRecordingPage(
+                          language: language,
                         ),
                       ),
                     );
@@ -139,7 +134,6 @@ class RecitationsPage extends StatelessWidget {
 
               const SizedBox(height: 15),
 
-              // صوت فقط
               Card(
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
@@ -154,17 +148,16 @@ class RecitationsPage extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  subtitle: Text(
-                    t['audioSub']!,
-                  ),
+                  subtitle: Text(t['audioSub']!),
                   trailing: const Icon(
                     Icons.arrow_forward_ios,
                   ),
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          '${t['audio']} - ${t['share']}',
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AudioRecordingPage(
+                          language: language,
                         ),
                       ),
                     );
@@ -173,6 +166,228 @@ class RecitationsPage extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class VideoRecordingPage extends StatefulWidget {
+  final String language;
+
+  const VideoRecordingPage({
+    super.key,
+    required this.language,
+  });
+
+  @override
+  State<VideoRecordingPage> createState() =>
+      _VideoRecordingPageState();
+}
+
+class _VideoRecordingPageState
+    extends State<VideoRecordingPage> {
+  CameraController? controller;
+  bool ready = false;
+  bool recording = false;
+
+  @override
+  void initState() {
+    super.initState();
+    startCamera();
+  }
+
+  Future<void> startCamera() async {
+    try {
+      final cameras = await availableCameras();
+
+      if (cameras.isEmpty) return;
+
+      controller = CameraController(
+        cameras.first,
+        ResolutionPreset.medium,
+        enableAudio: true,
+      );
+
+      await controller!.initialize();
+
+      if (mounted) {
+        setState(() {
+          ready = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Camera error: $e');
+    }
+  }
+
+  Future<void> toggleRecording() async {
+    if (controller == null || !ready) return;
+
+    if (recording) {
+      await controller!.stopVideoRecording();
+
+      if (mounted) {
+        setState(() {
+          recording = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم إيقاف التسجيل بنجاح 🎥'),
+          ),
+        );
+      }
+    } else {
+      await controller!.startVideoRecording();
+
+      if (mounted) {
+        setState(() {
+          recording = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('تسجيل التلاوة'),
+        centerTitle: true,
+      ),
+      body: !ready
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : Stack(
+              children: [
+                SizedBox.expand(
+                  child: CameraPreview(controller!),
+                ),
+                Positioned(
+                  bottom: 35,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: FloatingActionButton(
+                      onPressed: toggleRecording,
+                      backgroundColor:
+                          recording ? Colors.red : Colors.white,
+                      child: Icon(
+                        recording
+                            ? Icons.stop
+                            : Icons.videocam,
+                        color: recording
+                            ? Colors.white
+                            : Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class AudioRecordingPage extends StatefulWidget {
+  final String language;
+
+  const AudioRecordingPage({
+    super.key,
+    required this.language,
+  });
+
+  @override
+  State<AudioRecordingPage> createState() =>
+      _AudioRecordingPageState();
+}
+
+class _AudioRecordingPageState
+    extends State<AudioRecordingPage> {
+  final AudioRecorder recorder = AudioRecorder();
+
+  bool recording = false;
+
+  Future<void> toggleRecording() async {
+    if (recording) {
+      await recorder.stop();
+
+      if (mounted) {
+        setState(() {
+          recording = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم إيقاف التسجيل بنجاح 🎙️'),
+          ),
+        );
+      }
+    } else {
+      final hasPermission = await recorder.hasPermission();
+
+      if (!hasPermission) return;
+
+      await recorder.start(
+        const RecordConfig(),
+        path: 'recitation.m4a',
+      );
+
+      if (mounted) {
+        setState(() {
+          recording = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    recorder.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('تسجيل صوتي'),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              recording ? Icons.mic : Icons.mic_none,
+              size: 100,
+            ),
+            const SizedBox(height: 30),
+            Text(
+              recording
+                  ? 'جاري تسجيل تلاوتك...'
+                  : 'جاهز لتسجيل تلاوتك',
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 40),
+            FloatingActionButton(
+              onPressed: toggleRecording,
+              child: Icon(
+                recording ? Icons.stop : Icons.mic,
+              ),
+            ),
+          ],
         ),
       ),
     );
