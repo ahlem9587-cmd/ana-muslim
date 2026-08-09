@@ -1,5 +1,5 @@
 name: im_muslim
-description: أنا مسلم | Im Muslim
+description: أنا مسلم | I'm Muslim
 publish_to: "none"
 
 version: 1.0.0+1
@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  camera: ^0.11.2+1
 
 flutter:
   uses-material-design: true
