@@ -1,170 +1,180 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
-class RecitationsPage extends StatefulWidget {
-  const RecitationsPage({super.key});
+class RecitationsPage extends StatelessWidget {
+  final String language;
 
-  @override
-  State<RecitationsPage> createState() => _RecitationsPageState();
-}
+  const RecitationsPage({
+    super.key,
+    required this.language,
+  });
 
-class _RecitationsPageState extends State<RecitationsPage> {
-  CameraController? _cameraController;
-  List<CameraDescription> _cameras = [];
+  Map<String, String> get texts {
+    switch (language) {
+      case 'en':
+        return {
+          'title': 'Recitation Majlis',
+          'choose': 'Choose how you want to record',
+          'video': 'Voice & Video',
+          'videoSub': 'Record your recitation with camera and sound',
+          'audio': 'Voice Only',
+          'audioSub': 'Record your recitation without camera',
+          'share': 'Share your recitation with others',
+        };
 
-  bool _isReady = false;
-  bool _isRecording = false;
+      case 'fr':
+        return {
+          'title': 'Majlis de récitation',
+          'choose': 'Choisissez comment enregistrer',
+          'video': 'Audio et vidéo',
+          'videoSub': 'Enregistrez avec la caméra et le son',
+          'audio': 'Audio seulement',
+          'audioSub': 'Enregistrez sans caméra',
+          'share': 'Partagez votre récitation avec les autres',
+        };
 
-  @override
-  void initState() {
-    super.initState();
-    _startCamera();
-  }
+      case 'tr':
+        return {
+          'title': 'Tilavet Meclisi',
+          'choose': 'Nasıl kayıt yapmak istediğinizi seçin',
+          'video': 'Ses ve Görüntü',
+          'videoSub': 'Kamera ve ses ile tilavet kaydedin',
+          'audio': 'Sadece Ses',
+          'audioSub': 'Kamerasız tilavet kaydedin',
+          'share': 'Tilavetinizi başkalarıyla paylaşın',
+        };
 
-  Future<void> _startCamera() async {
-    try {
-      _cameras = await availableCameras();
+      case 'ur':
+        return {
+          'title': 'تلاوت کی مجلس',
+          'choose': 'منتخب کریں کہ کیسے ریکارڈ کرنا ہے',
+          'video': 'آواز اور ویڈیو',
+          'videoSub': 'کیمرے اور آواز کے ساتھ تلاوت ریکارڈ کریں',
+          'audio': 'صرف آواز',
+          'audioSub': 'کیمرے کے بغیر تلاوت ریکارڈ کریں',
+          'share': 'اپنی تلاوت دوسروں کے ساتھ شیئر کریں',
+        };
 
-      if (_cameras.isEmpty) {
-        return;
-      }
-
-      final camera = _cameras.firstWhere(
-        (camera) => camera.lensDirection == CameraLensDirection.front,
-        orElse: () => _cameras.first,
-      );
-
-      _cameraController = CameraController(
-        camera,
-        ResolutionPreset.medium,
-        enableAudio: true,
-      );
-
-      await _cameraController!.initialize();
-
-      if (mounted) {
-        setState(() {
-          _isReady = true;
-        });
-      }
-    } catch (e) {
-      debugPrint('Camera error: $e');
+      default:
+        return {
+          'title': 'مجلس التلاوة',
+          'choose': 'اختر طريقة تسجيل تلاوتك',
+          'video': 'صوت وصورة',
+          'videoSub': 'سجّل تلاوتك بالكاميرا والصوت',
+          'audio': 'صوت فقط',
+          'audioSub': 'سجّل تلاوتك بدون كاميرا',
+          'share': 'شارك تلاوتك مع الآخرين',
+        };
     }
-  }
-
-  Future<void> _toggleRecording() async {
-    if (_cameraController == null ||
-        !_cameraController!.value.isInitialized) {
-      return;
-    }
-
-    if (_isRecording) {
-      final video = await _cameraController!.stopVideoRecording();
-
-      if (mounted) {
-        setState(() {
-          _isRecording = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم حفظ التلاوة بنجاح 🎙️'),
-          ),
-        );
-      }
-
-      debugPrint('Recorded video: ${video.path}');
-    } else {
-      await _cameraController!.startVideoRecording();
-
-      if (mounted) {
-        setState(() {
-          _isRecording = true;
-        });
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _cameraController?.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('مجلس التلاوة'),
-        centerTitle: true,
+    final t = texts;
+    final isArabic = language == 'ar' || language == 'ur';
+
+    return Directionality(
+      textDirection:
+          isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(t['title']!),
+          centerTitle: true,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+
+              const Icon(
+                Icons.menu_book,
+                size: 70,
+              ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                t['choose']!,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 30),
+
+              // صوت وصورة
+              Card(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16),
+                  leading: const Icon(
+                    Icons.videocam,
+                    size: 40,
+                  ),
+                  title: Text(
+                    t['video']!,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    t['videoSub']!,
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                  ),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${t['video']} - ${t['share']}',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 15),
+
+              // صوت فقط
+              Card(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16),
+                  leading: const Icon(
+                    Icons.mic,
+                    size: 40,
+                  ),
+                  title: Text(
+                    t['audio']!,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    t['audioSub']!,
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                  ),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${t['audio']} - ${t['share']}',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      body: !_isReady
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : Stack(
-              children: [
-                SizedBox.expand(
-                  child: CameraPreview(_cameraController!),
-                ),
-
-                Positioned(
-                  top: 20,
-                  left: 20,
-                  right: 20,
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Text(
-                      'اعرض تلاوتك على المسلمين 📖',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-
-                Positioned(
-                  bottom: 35,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: GestureDetector(
-                      onTap: _toggleRecording,
-                      child: Container(
-                        width: 75,
-                        height: 75,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _isRecording
-                              ? Colors.red
-                              : Colors.white,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 5,
-                          ),
-                        ),
-                        child: Icon(
-                          _isRecording
-                              ? Icons.stop
-                              : Icons.mic,
-                          size: 38,
-                          color: _isRecording
-                              ? Colors.white
-                              : Colors.green,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
     );
   }
 }
