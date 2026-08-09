@@ -126,24 +126,28 @@ class HomePage extends StatelessWidget {
                 },
               ),
 
+              // أوقات الصلاة
               _menuButton(
                 context,
                 Icons.access_time,
                 t['prayer']!,
               ),
 
+              // الأذكار
               _menuButton(
                 context,
                 Icons.favorite,
                 t['dhikr']!,
               ),
 
+              // المسبحة
               _menuButton(
                 context,
                 Icons.touch_app,
                 t['tasbeeh']!,
               ),
 
+              // الملف الشخصي
               _menuButton(
                 context,
                 Icons.person,
