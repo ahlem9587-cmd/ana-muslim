@@ -11,6 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  camera: ^0.11.2+1
+  record: ^6.2.1
+
 flutter:
   uses-material-design: true
 
