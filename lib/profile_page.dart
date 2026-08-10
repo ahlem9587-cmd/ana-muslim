@@ -17,12 +17,15 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   bool darkMode = false;
 
+  // اسم الحساب
+  String userName = '';
+
   Map<String, String> get texts {
     switch (widget.language) {
       case 'en':
         return {
           'title': 'Profile',
-          'name': 'Muslim',
+          'chooseName': 'Choose your name',
           'blessing': 'May Allah bless you 🌿',
           'quranProgress': 'Qur’an Progress',
           'juz': 'Juz 14 / 30',
@@ -46,12 +49,16 @@ class _ProfilePageState extends State<ProfilePage> {
           'hadithNav': 'Hadith',
           'profile': 'Profile',
           'majlis': 'Recitation Majlis',
+          'nameTitle': 'Choose your name',
+          'nameHint': 'Enter your name',
+          'cancel': 'Cancel',
+          'save': 'Save',
         };
 
       case 'fr':
         return {
           'title': 'Profil',
-          'name': 'Musulman',
+          'chooseName': 'Choisissez votre nom',
           'blessing': 'Qu’Allah vous bénisse 🌿',
           'quranProgress': 'Progression du Coran',
           'juz': 'Juz 14 / 30',
@@ -75,12 +82,16 @@ class _ProfilePageState extends State<ProfilePage> {
           'hadithNav': 'Hadith',
           'profile': 'Profil',
           'majlis': 'Majlis de récitation',
+          'nameTitle': 'Choisissez votre nom',
+          'nameHint': 'Entrez votre nom',
+          'cancel': 'Annuler',
+          'save': 'Enregistrer',
         };
 
       case 'tr':
         return {
           'title': 'Profil',
-          'name': 'Müslüman',
+          'chooseName': 'Adınızı seçin',
           'blessing': 'Allah seni bereketlendirsin 🌿',
           'quranProgress': 'Kur’an İlerlemesi',
           'juz': 'Cüz 14 / 30',
@@ -104,12 +115,16 @@ class _ProfilePageState extends State<ProfilePage> {
           'hadithNav': 'Hadis',
           'profile': 'Profil',
           'majlis': 'Tilavet Meclisi',
+          'nameTitle': 'Adınızı seçin',
+          'nameHint': 'Adınızı girin',
+          'cancel': 'İptal',
+          'save': 'Kaydet',
         };
 
       case 'ur':
         return {
           'title': 'پروفائل',
-          'name': 'مسلمان',
+          'chooseName': 'اپنا نام منتخب کریں',
           'blessing': 'اللہ آپ کو برکت دے 🌿',
           'quranProgress': 'قرآن کی پیشرفت',
           'juz': 'جز 14 / 30',
@@ -133,12 +148,16 @@ class _ProfilePageState extends State<ProfilePage> {
           'hadithNav': 'حدیث',
           'profile': 'پروفائل',
           'majlis': 'تلاوت کی مجلس',
+          'nameTitle': 'اپنا نام منتخب کریں',
+          'nameHint': 'اپنا نام لکھیں',
+          'cancel': 'منسوخ',
+          'save': 'محفوظ کریں',
         };
 
       default:
         return {
           'title': 'الملف الشخصي',
-          'name': 'مسلم',
+          'chooseName': 'اختر اسمك',
           'blessing': 'بارك الله فيك 🌿',
           'quranProgress': 'تقدم القرآن',
           'juz': 'الجزء 14 / 30',
@@ -162,15 +181,82 @@ class _ProfilePageState extends State<ProfilePage> {
           'hadithNav': 'الحديث',
           'profile': 'البروفايل',
           'majlis': 'مجلس التلاوة',
+          'nameTitle': 'اختر اسمك',
+          'nameHint': 'اكتب اسمك',
+          'cancel': 'إلغاء',
+          'save': 'حفظ',
         };
+    }
+  }
+
+  Future<void> _chooseName() async {
+    final t = texts;
+
+    final controller = TextEditingController(
+      text: userName,
+    );
+
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(t['nameTitle']!),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              hintText: t['nameHint']!,
+              prefixIcon: const Icon(Icons.person),
+              border: const OutlineInputBorder(),
+            ),
+            onSubmitted: (_) {
+              final name = controller.text.trim();
+
+              if (name.isNotEmpty) {
+                Navigator.pop(dialogContext, name);
+              }
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: Text(t['cancel']!),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final name = controller.text.trim();
+
+                if (name.isNotEmpty) {
+                  Navigator.pop(dialogContext, name);
+                }
+              },
+              child: Text(t['save']!),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newName != null && newName.trim().isNotEmpty) {
+      setState(() {
+        userName = newName.trim();
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final t = texts;
+
     final isArabic =
-        widget.language == 'ar' || widget.language == 'ur';
+        widget.language == 'ar' ||
+        widget.language == 'ur';
+
+    final displayName =
+        userName.isEmpty ? t['chooseName']! : userName;
 
     return Directionality(
       textDirection:
@@ -179,7 +265,6 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: darkMode
             ? const Color(0xFF10251F)
             : const Color(0xFFF4EDE1),
-
         body: SafeArea(
           child: Column(
             children: [
@@ -193,55 +278,76 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   child: Column(
                     children: [
-                      // العنوان
-                      Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "I’m Muslim",
-                            style: TextStyle(
-                              fontSize: 27,
-                              fontWeight: FontWeight.bold,
-                              color: darkMode
-                                  ? Colors.white
-                                  : const Color(0xFF173D32),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        "I’m Muslim",
+                        style: TextStyle(
+                          fontSize: 27,
+                          fontWeight: FontWeight.bold,
+                          color: darkMode
+                              ? Colors.white
+                              : const Color(0xFF173D32),
+                        ),
                       ),
 
                       const SizedBox(height: 18),
 
-                      // دائرة البروفايل بدون صورة شخصية وبدون كاميرا
-                      Container(
-                        width: 118,
-                        height: 118,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFE8DDCC),
-                          border: Border.all(
-                            color: const Color(0xFFF5F0E8),
-                            width: 6,
+                      // الصورة الشخصية
+                      GestureDetector(
+                        onTap: _chooseName,
+                        child: Container(
+                          width: 118,
+                          height: 118,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFFE8DDCC),
+                            border: Border.all(
+                              color: const Color(0xFFF5F0E8),
+                              width: 6,
+                            ),
                           ),
-                        ),
-                        child: const Icon(
-                          Icons.person,
-                          size: 62,
-                          color: Color(0xFF55736B),
+                          child: const Icon(
+                            Icons.person,
+                            size: 62,
+                            color: Color(0xFF55736B),
+                          ),
                         ),
                       ),
 
                       const SizedBox(height: 14),
 
-                      Text(
-                        t['name']!,
-                        style: TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.bold,
-                          color: darkMode
-                              ? Colors.white
-                              : const Color(0xFF172D27),
+                      // اسم المستخدم
+                      GestureDetector(
+                        onTap: _chooseName,
+                        child: Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                displayName,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold,
+                                  color: userName.isEmpty
+                                      ? const Color(0xFF17604B)
+                                      : (darkMode
+                                          ? Colors.white
+                                          : const Color(
+                                              0xFF172D27,
+                                            )),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.edit,
+                              size: 20,
+                              color: darkMode
+                                  ? Colors.white70
+                                  : const Color(0xFF55736B),
+                            ),
+                          ],
                         ),
                       ),
 
@@ -259,7 +365,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       const SizedBox(height: 28),
 
-                      // تقدم القرآن
                       _progressCard(
                         context,
                         t['quranProgress']!,
@@ -268,7 +373,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       const SizedBox(height: 16),
 
-                      // آخر قراءة + الأحاديث
                       Row(
                         children: [
                           Expanded(
@@ -296,7 +400,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       const SizedBox(height: 14),
 
-                      // التسبيح + الأذكار
                       Row(
                         children: [
                           Expanded(
@@ -327,7 +430,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       const SizedBox(height: 18),
 
-                      // معلومات الملف والإعدادات واللغة والوضع الداكن
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
@@ -343,7 +445,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               context,
                               Icons.person,
                               t['profileInfo']!,
-                              onTap: () {},
+                              onTap: _chooseName,
                             ),
                             _divider(),
                             _settingTile(
@@ -357,7 +459,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               context,
                               Icons.language,
                               t['language']!,
-                              trailingText: t['english']!,
+                              trailingText:
+                                  t['english']!,
                               onTap: () {},
                             ),
                             _divider(),
@@ -384,7 +487,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
 
-              // الشريط السفلي
               _bottomNavigation(context, t),
             ],
           ),
@@ -406,13 +508,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ? const Color(0xFF19342C)
             : const Color(0xFFFFFAF2),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Row(
         children: [
@@ -429,9 +524,7 @@ class _ProfilePageState extends State<ProfilePage> {
               size: 38,
             ),
           ),
-
           const SizedBox(width: 16),
-
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -463,9 +556,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 10),
-
                 ClipRRect(
                   borderRadius:
                       BorderRadius.circular(20),
@@ -480,9 +571,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 Text(
                   subtitle,
                   style: TextStyle(
@@ -526,9 +615,7 @@ class _ProfilePageState extends State<ProfilePage> {
             size: 45,
             color: iconColor,
           ),
-
           const SizedBox(height: 8),
-
           Text(
             title,
             maxLines: 1,
@@ -540,9 +627,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   : Colors.black87,
             ),
           ),
-
           const SizedBox(height: 3),
-
           Text(
             value,
             maxLines: 1,
@@ -555,7 +640,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   : Colors.black87,
             ),
           ),
-
           Text(
             subtitle,
             maxLines: 1,
@@ -651,12 +735,6 @@ class _ProfilePageState extends State<ProfilePage> {
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(28),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 12,
-          ),
-        ],
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -672,7 +750,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 Navigator.pop(context);
               },
             ),
-
             _navItem(
               context,
               Icons.menu_book_outlined,
@@ -689,21 +766,18 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
             ),
-
             _navItem(
               context,
               Icons.favorite_border,
               t['adhkarNav']!,
               false,
             ),
-
             _navItem(
               context,
               Icons.auto_stories_outlined,
               t['hadithNav']!,
               false,
             ),
-
             _navItem(
               context,
               Icons.menu_book,
@@ -720,7 +794,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
             ),
-
             _navItem(
               context,
               Icons.person,
