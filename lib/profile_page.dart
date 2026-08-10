@@ -4,9 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'quran_page.dart';
-import 'recitations_page.dart';
-
 class ProfilePage extends StatefulWidget {
   final String language;
 
@@ -83,12 +80,6 @@ class _ProfilePageState extends State<ProfilePage> {
           'settings': 'Settings',
           'language': 'Language',
           'dark': 'Dark Mode',
-          'home': 'Home',
-          'quran': "Qur’an",
-          'adhkarNav': 'Adhkar',
-          'hadithNav': 'Hadith',
-          'profile': 'Profile',
-          'majlis': 'Recitation Majlis',
           'nameTitle': 'Choose your name',
           'nameHint': 'Enter your name',
           'cancel': 'Cancel',
@@ -114,12 +105,6 @@ class _ProfilePageState extends State<ProfilePage> {
           'settings': 'Paramètres',
           'language': 'Langue',
           'dark': 'Mode sombre',
-          'home': 'Accueil',
-          'quran': 'Coran',
-          'adhkarNav': 'Adhkar',
-          'hadithNav': 'Hadith',
-          'profile': 'Profil',
-          'majlis': 'Majlis de récitation',
           'nameTitle': 'Choisissez votre nom',
           'nameHint': 'Entrez votre nom',
           'cancel': 'Annuler',
@@ -145,12 +130,6 @@ class _ProfilePageState extends State<ProfilePage> {
           'settings': 'Ayarlar',
           'language': 'Dil',
           'dark': 'Karanlık Mod',
-          'home': 'Ana Sayfa',
-          'quran': 'Kur’an',
-          'adhkarNav': 'Zikir',
-          'hadithNav': 'Hadis',
-          'profile': 'Profil',
-          'majlis': 'Tilavet Meclisi',
           'nameTitle': 'Adınızı seçin',
           'nameHint': 'Adınızı girin',
           'cancel': 'İptal',
@@ -176,12 +155,6 @@ class _ProfilePageState extends State<ProfilePage> {
           'settings': 'ترتیبات',
           'language': 'زبان',
           'dark': 'ڈارک موڈ',
-          'home': 'ہوم',
-          'quran': 'قرآن',
-          'adhkarNav': 'اذکار',
-          'hadithNav': 'حدیث',
-          'profile': 'پروفائل',
-          'majlis': 'تلاوت کی مجلس',
           'nameTitle': 'اپنا نام منتخب کریں',
           'nameHint': 'اپنا نام لکھیں',
           'cancel': 'منسوخ',
@@ -207,12 +180,6 @@ class _ProfilePageState extends State<ProfilePage> {
           'settings': 'الإعدادات',
           'language': 'اللغة',
           'dark': 'الوضع الداكن',
-          'home': 'الرئيسية',
-          'quran': 'القرآن',
-          'adhkarNav': 'الأذكار',
-          'hadithNav': 'الأحاديث',
-          'profile': 'البروفايل',
-          'majlis': 'مجلس التلاوة',
           'nameTitle': 'اختر اسمك',
           'nameHint': 'اكتب اسمك',
           'cancel': 'إلغاء',
@@ -333,7 +300,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
             'حدث خطأ أثناء اختيار الصورة',
           ),
@@ -442,347 +409,338 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: darkMode
             ? const Color(0xFF10251F)
             : const Color(0xFFF4EDE1),
+
+        // ==========================================
+        // لا يوجد شريط تنقل سفلي هنا
+        // HomePage هو المسؤول عن الشريط الوحيد
+        // ==========================================
+
         body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _loadProfileData,
-                  child: ListView(
-                    padding:
-                        const EdgeInsets.fromLTRB(
-                      18,
-                      20,
-                      18,
-                      25,
-                    ),
-                    children: [
-                      Text(
-                        "I’m Muslim",
-                        textAlign:
-                            TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 27,
-                          fontWeight:
-                              FontWeight.bold,
-                          color: darkMode
-                              ? Colors.white
-                              : const Color(
-                                  0xFF173D32,
+          child: RefreshIndicator(
+            onRefresh: _loadProfileData,
+            child: ListView(
+              padding:
+                  const EdgeInsets.fromLTRB(
+                18,
+                20,
+                18,
+                25,
+              ),
+              children: [
+                Text(
+                  "I’m Muslim",
+                  textAlign:
+                      TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 27,
+                    fontWeight:
+                        FontWeight.bold,
+                    color: darkMode
+                        ? Colors.white
+                        : const Color(
+                            0xFF173D32,
+                          ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // =========================
+                // صورة البروفايل
+                // =========================
+
+                Center(
+                  child: GestureDetector(
+                    onTap: _showImageOptions,
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration:
+                              BoxDecoration(
+                            shape:
+                                BoxShape.circle,
+                            color:
+                                const Color(
+                              0xFFE8DDCC,
+                            ),
+                            border:
+                                Border.all(
+                              color:
+                                  const Color(
+                                0xFFF5F0E8,
+                              ),
+                              width: 6,
+                            ),
+                            image: hasImage
+                                ? DecorationImage(
+                                    image:
+                                        FileImage(
+                                      File(
+                                        profileImagePath!,
+                                      ),
+                                    ),
+                                    fit: BoxFit
+                                        .cover,
+                                  )
+                                : null,
+                          ),
+                          child: hasImage
+                              ? null
+                              : const Icon(
+                                  Icons.person,
+                                  size: 62,
+                                  color:
+                                      Color(
+                                    0xFF55736B,
+                                  ),
                                 ),
                         ),
-                      ),
 
-                      const SizedBox(
-                        height: 24,
-                      ),
-
-                      // =========================
-                      // صورة البروفايل
-                      // =========================
-
-                      Center(
-                        child: GestureDetector(
-                          onTap: _showImageOptions,
-                          child: Stack(
-                            children: [
-                              Container(
-                                width: 120,
-                                height: 120,
-                                decoration:
-                                    BoxDecoration(
-                                  shape:
-                                      BoxShape.circle,
-                                  color:
-                                      const Color(
-                                    0xFFE8DDCC,
-                                  ),
-                                  border:
-                                      Border.all(
-                                    color:
-                                        const Color(
-                                      0xFFF5F0E8,
-                                    ),
-                                    width: 6,
-                                  ),
-                                  image: hasImage
-                                      ? DecorationImage(
-                                          image:
-                                              FileImage(
-                                            File(
-                                              profileImagePath!,
-                                            ),
-                                          ),
-                                          fit: BoxFit
-                                              .cover,
-                                        )
-                                      : null,
-                                ),
-                                child: hasImage
-                                    ? null
-                                    : const Icon(
-                                        Icons.person,
-                                        size: 62,
-                                        color:
-                                            Color(
-                                          0xFF55736B,
-                                        ),
-                                      ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration:
+                                BoxDecoration(
+                              shape:
+                                  BoxShape.circle,
+                              color:
+                                  const Color(
+                                0xFF17604B,
                               ),
-
-                              // زر الكاميرا الحقيقي
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration:
-                                      BoxDecoration(
-                                    shape:
-                                        BoxShape
-                                            .circle,
-                                    color:
-                                        const Color(
-                                      0xFF17604B,
-                                    ),
-                                    border:
-                                        Border.all(
-                                      color:
-                                          Colors.white,
-                                      width: 3,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons
-                                        .camera_alt_rounded,
-                                    color:
-                                        Colors.white,
-                                    size: 21,
-                                  ),
-                                ),
+                              border:
+                                  Border.all(
+                                color:
+                                    Colors.white,
+                                width: 3,
                               ),
-                            ],
+                            ),
+                            child:
+                                const Icon(
+                              Icons
+                                  .camera_alt_rounded,
+                              color:
+                                  Colors.white,
+                              size: 21,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                GestureDetector(
+                  onTap: _chooseName,
+                  child: Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment
+                            .center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          displayName,
+                          textAlign:
+                              TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight:
+                                FontWeight.bold,
+                            color: userName
+                                    .isEmpty
+                                ? const Color(
+                                    0xFF17604B,
+                                  )
+                                : (darkMode
+                                    ? Colors.white
+                                    : const Color(
+                                        0xFF172D27,
+                                      )),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 14),
+                      const SizedBox(width: 8),
 
-                      GestureDetector(
-                        onTap: _chooseName,
-                        child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment
-                                  .center,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                displayName,
-                                textAlign:
-                                    TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight:
-                                      FontWeight.bold,
-                                  color: userName
-                                          .isEmpty
-                                      ? const Color(
-                                          0xFF17604B,
-                                        )
-                                      : (darkMode
-                                          ? Colors.white
-                                          : const Color(
-                                              0xFF172D27,
-                                            )),
-                                ),
+                      Icon(
+                        Icons.edit,
+                        size: 19,
+                        color: darkMode
+                            ? Colors.white70
+                            : const Color(
+                                0xFF55736B,
                               ),
-                            ),
-                            const SizedBox(
-                              width: 8,
-                            ),
-                            Icon(
-                              Icons.edit,
-                              size: 19,
-                              color: darkMode
-                                  ? Colors.white70
-                                  : const Color(
-                                      0xFF55736B,
-                                    ),
-                            ),
-                          ],
-                        ),
                       ),
+                    ],
+                  ),
+                ),
 
-                      const SizedBox(height: 5),
+                const SizedBox(height: 5),
 
-                      Text(
-                        t['blessing']!,
-                        textAlign:
-                            TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: darkMode
-                              ? Colors.white70
-                              : const Color(
-                                  0xFF555555,
-                                ),
-                        ),
-                      ),
+                Text(
+                  t['blessing']!,
+                  textAlign:
+                      TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: darkMode
+                        ? Colors.white70
+                        : const Color(
+                            0xFF555555,
+                          ),
+                  ),
+                ),
 
-                      const SizedBox(
-                        height: 28,
-                      ),
+                const SizedBox(height: 28),
 
-                      _infoCard(
+                _infoCard(
+                  icon:
+                      Icons.menu_book_rounded,
+                  title:
+                      t['lastRead']!,
+                  value: lastSurah,
+                  iconColor:
+                      const Color(
+                    0xFF17604B,
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _smallCard(
                         icon:
-                            Icons.menu_book_rounded,
+                            Icons.touch_app_rounded,
                         title:
-                            t['lastRead']!,
-                        value: lastSurah,
+                            t['tasbeeh']!,
+                        value:
+                            '$tasbeehCount',
+                        subtitle:
+                            t['tasbeehText']!,
                         iconColor:
                             const Color(
-                          0xFF17604B,
+                          0xFFB86F27,
                         ),
                       ),
+                    ),
 
-                      const SizedBox(
-                        height: 14,
-                      ),
+                    const SizedBox(width: 14),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _smallCard(
-                              icon: Icons
-                                  .touch_app_rounded,
-                              title:
-                                  t['tasbeeh']!,
-                              value:
-                                  '$tasbeehCount',
-                              subtitle:
-                                  t['tasbeehText']!,
-                              iconColor:
-                                  const Color(
-                                0xFFB86F27,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 14,
-                          ),
-                          Expanded(
-                            child: _smallCard(
-                              icon:
-                                  Icons.star_rounded,
-                              title:
-                                  t['favorite']!,
-                              value:
-                                  '$favoriteAdhkarCount',
-                              subtitle:
-                                  t['adhkar']!,
-                              iconColor:
-                                  const Color(
-                                0xFFE6AA28,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(
-                        height: 14,
-                      ),
-
-                      _smallCard(
+                    Expanded(
+                      child: _smallCard(
                         icon:
                             Icons.star_rounded,
                         title:
-                            t['savedHadith']!,
+                            t['favorite']!,
                         value:
-                            '$favoriteHadithCount',
+                            '$favoriteAdhkarCount',
                         subtitle:
-                            t['hadiths']!,
+                            t['adhkar']!,
                         iconColor:
                             const Color(
                           0xFFE6AA28,
                         ),
-                        fullWidth: true,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                _smallCard(
+                  icon:
+                      Icons.star_rounded,
+                  title:
+                      t['savedHadith']!,
+                  value:
+                      '$favoriteHadithCount',
+                  subtitle:
+                      t['hadiths']!,
+                  iconColor:
+                      const Color(
+                    0xFFE6AA28,
+                  ),
+                  fullWidth: true,
+                ),
+
+                const SizedBox(height: 20),
+
+                Container(
+                  width: double.infinity,
+                  decoration:
+                      BoxDecoration(
+                    color: darkMode
+                        ? const Color(
+                            0xFF19342C,
+                          )
+                        : const Color(
+                            0xFFFFFAF2,
+                          ),
+                    borderRadius:
+                        BorderRadius.circular(
+                      24,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      _settingTile(
+                        Icons.person,
+                        t['chooseName']!,
+                        onTap:
+                            _chooseName,
                       ),
 
-                      const SizedBox(
-                        height: 20,
+                      _divider(),
+
+                      _settingTile(
+                        Icons.settings,
+                        t['settings']!,
+                        onTap: () {},
                       ),
 
-                      Container(
-                        width:
-                            double.infinity,
-                        decoration:
-                            BoxDecoration(
-                          color: darkMode
-                              ? const Color(
-                                  0xFF19342C,
-                                )
-                              : const Color(
-                                  0xFFFFFAF2,
-                                ),
-                          borderRadius:
-                              BorderRadius
-                                  .circular(24),
-                        ),
-                        child: Column(
-                          children: [
-                            _settingTile(
-                              Icons.person,
-                              t['chooseName']!,
-                              onTap:
-                                  _chooseName,
-                            ),
-                            _divider(),
+                      _divider(),
 
-                            _settingTile(
-                              Icons.settings,
-                              t['settings']!,
-                              onTap: () {},
-                            ),
-                            _divider(),
+                      _settingTile(
+                        Icons.language,
+                        t['language']!,
+                        onTap: () {},
+                      ),
 
-                            _settingTile(
-                              Icons.language,
-                              t['language']!,
-                              onTap: () {},
-                            ),
-                            _divider(),
+                      _divider(),
 
-                            _settingTile(
-                              Icons.dark_mode,
-                              t['dark']!,
-                              trailing:
-                                  Switch(
-                                value:
-                                    darkMode,
-                                onChanged:
-                                    (value) {
-                                  setState(() {
-                                    darkMode =
-                                        value;
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
+                      _settingTile(
+                        Icons.dark_mode,
+                        t['dark']!,
+                        trailing:
+                            Switch(
+                          value:
+                              darkMode,
+                          onChanged:
+                              (value) {
+                            setState(() {
+                              darkMode =
+                                  value;
+                            });
+                          },
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
 
-              _bottomNavigation(
-                context,
-                t,
-              ),
-            ],
+                // مساحة بسيطة أسفل المحتوى
+                // لأن HomePage سيضع شريطه أسفل الشاشة
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
@@ -812,7 +770,9 @@ class _ProfilePageState extends State<ProfilePage> {
             size: 42,
             color: iconColor,
           ),
+
           const SizedBox(width: 15),
+
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -827,7 +787,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         : Colors.black87,
                   ),
                 ),
+
                 const SizedBox(height: 4),
+
                 Text(
                   value,
                   maxLines: 1,
@@ -878,7 +840,9 @@ class _ProfilePageState extends State<ProfilePage> {
             size: 35,
             color: iconColor,
           ),
+
           const SizedBox(height: 7),
+
           Text(
             title,
             maxLines: 1,
@@ -891,7 +855,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   : Colors.black87,
             ),
           ),
+
           const SizedBox(height: 2),
+
           Text(
             value,
             style: TextStyle(
@@ -903,6 +869,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   : Colors.black87,
             ),
           ),
+
           Text(
             subtitle,
             style: TextStyle(
@@ -929,6 +896,7 @@ class _ProfilePageState extends State<ProfilePage> {
         horizontal: 20,
         vertical: 3,
       ),
+
       leading: Icon(
         icon,
         size: 28,
@@ -936,6 +904,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ? Colors.white70
             : const Color(0xFF536761),
       ),
+
       title: Text(
         title,
         style: TextStyle(
@@ -947,11 +916,13 @@ class _ProfilePageState extends State<ProfilePage> {
               : Colors.black87,
         ),
       ),
+
       trailing: trailing ??
           const Icon(
             Icons.arrow_forward_ios,
             size: 17,
           ),
+
       onTap: onTap,
     );
   }
@@ -964,152 +935,6 @@ class _ProfilePageState extends State<ProfilePage> {
       color: darkMode
           ? Colors.white12
           : Colors.black12,
-    );
-  }
-
-  Widget _bottomNavigation(
-    BuildContext context,
-    Map<String, String> t,
-  ) {
-    return Container(
-      height: 78,
-      decoration: BoxDecoration(
-        color: darkMode
-            ? const Color(0xFF17352D)
-            : const Color(0xFFFFFAF2),
-        borderRadius:
-            const BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection:
-            Axis.horizontal,
-        child: Row(
-          children: [
-            _navItem(
-              Icons.home_outlined,
-              t['home']!,
-              false,
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-
-            _navItem(
-              Icons.menu_book_outlined,
-              t['quran']!,
-              false,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        QuranPage(
-                      language:
-                          widget.language,
-                    ),
-                  ),
-                );
-              },
-            ),
-
-            _navItem(
-              Icons.favorite_border,
-              t['adhkarNav']!,
-              false,
-            ),
-
-            _navItem(
-              Icons.touch_app_rounded,
-              t['tasbeehText']!,
-              false,
-            ),
-
-            _navItem(
-              Icons.auto_stories_outlined,
-              t['hadithNav']!,
-              false,
-            ),
-
-            _navItem(
-              Icons
-                  .record_voice_over_rounded,
-              t['majlis']!,
-              false,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        RecitationsPage(
-                      language:
-                          widget.language,
-                    ),
-                  ),
-                );
-              },
-            ),
-
-            _navItem(
-              Icons.person,
-              t['profile']!,
-              true,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _navItem(
-    IconData icon,
-    String label,
-    bool selected, {
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: SizedBox(
-        width: 88,
-        child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 27,
-              color: selected
-                  ? const Color(
-                      0xFF17604B,
-                    )
-                  : (darkMode
-                      ? Colors.white70
-                      : Colors.black54),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              maxLines: 1,
-              overflow:
-                  TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: selected
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-                color: selected
-                    ? const Color(
-                        0xFF17604B,
-                      )
-                    : (darkMode
-                        ? Colors.white70
-                        : Colors.black54),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
