@@ -165,6 +165,62 @@ class _ProfilePageState extends State<ProfilePage> {
           'surah': 'آخری سورت',
         };
 
+      case 'id':
+        return {
+          'title': 'Profil',
+          'chooseName': 'Pilih nama Anda',
+          'blessing': 'Semoga Allah memberkahi Anda 🌿',
+          'lastRead': 'Bacaan Terakhir',
+          'savedHadith': 'Hadis Favorit',
+          'hadiths': 'Hadis',
+          'tasbeeh': 'Jumlah Tasbih',
+          'tasbeehText': 'Tasbih',
+          'favorite': 'Dzikir Favorit',
+          'adhkar': 'Dzikir',
+          'settings': 'Pengaturan',
+          'language': 'Bahasa',
+          'dark': 'Mode Gelap',
+          'home': 'Beranda',
+          'quran': 'Al-Qur’an',
+          'adhkarNav': 'Dzikir',
+          'hadithNav': 'Hadis',
+          'profile': 'Profil',
+          'majlis': 'Majelis Tilawah',
+          'nameTitle': 'Pilih nama Anda',
+          'nameHint': 'Masukkan nama Anda',
+          'cancel': 'Batal',
+          'save': 'Simpan',
+          'surah': 'Surah Terakhir',
+        };
+
+      case 'ms':
+        return {
+          'title': 'Profil',
+          'chooseName': 'Pilih nama anda',
+          'blessing': 'Semoga Allah memberkati anda 🌿',
+          'lastRead': 'Bacaan Terakhir',
+          'savedHadith': 'Hadis Kegemaran',
+          'hadiths': 'Hadis',
+          'tasbeeh': 'Kiraan Tasbih',
+          'tasbeehText': 'Tasbih',
+          'favorite': 'Zikir Kegemaran',
+          'adhkar': 'Zikir',
+          'settings': 'Tetapan',
+          'language': 'Bahasa',
+          'dark': 'Mod Gelap',
+          'home': 'Laman Utama',
+          'quran': 'Al-Quran',
+          'adhkarNav': 'Zikir',
+          'hadithNav': 'Hadis',
+          'profile': 'Profil',
+          'majlis': 'Majlis Tilawah',
+          'nameTitle': 'Pilih nama anda',
+          'nameHint': 'Masukkan nama anda',
+          'cancel': 'Batal',
+          'save': 'Simpan',
+          'surah': 'Surah Terakhir',
+        };
+
       default:
         return {
           'title': 'الملف الشخصي',
@@ -476,7 +532,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               ),
-
               _bottomNavigation(context, t),
             ],
           ),
@@ -692,7 +747,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 Navigator.pop(context);
               },
             ),
-
             _navItem(
               Icons.menu_book_outlined,
               t['quran']!,
@@ -708,26 +762,21 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
             ),
-
             _navItem(
               Icons.favorite_border,
               t['adhkarNav']!,
               false,
             ),
-
-            // المسبحة
             _navItem(
               Icons.touch_app_rounded,
               t['tasbeehText']!,
               false,
             ),
-
             _navItem(
               Icons.auto_stories_outlined,
               t['hadithNav']!,
               false,
             ),
-
             _navItem(
               Icons.record_voice_over_rounded,
               t['majlis']!,
@@ -743,7 +792,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
             ),
-
             _navItem(
               Icons.person,
               t['profile']!,
