@@ -692,6 +692,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Navigator.pop(context);
               },
             ),
+
             _navItem(
               Icons.menu_book_outlined,
               t['quran']!,
@@ -707,18 +708,28 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
             ),
+
             _navItem(
               Icons.favorite_border,
               t['adhkarNav']!,
               false,
             ),
+
+            // المسبحة
+            _navItem(
+              Icons.touch_app_rounded,
+              t['tasbeehText']!,
+              false,
+            ),
+
             _navItem(
               Icons.auto_stories_outlined,
               t['hadithNav']!,
               false,
             ),
+
             _navItem(
-              Icons.menu_book,
+              Icons.record_voice_over_rounded,
               t['majlis']!,
               false,
               onTap: () {
@@ -732,6 +743,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
             ),
+
             _navItem(
               Icons.person,
               t['profile']!,
