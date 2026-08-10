@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'recitations_page.dart';
 import 'quran_page.dart';
+import 'recitations_page.dart';
+import 'profile_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final String language;
 
   const HomePage({
@@ -10,71 +11,88 @@ class HomePage extends StatelessWidget {
     required this.language,
   });
 
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int selectedIndex = 0;
+
   Map<String, String> get texts {
-    switch (language) {
+    switch (widget.language) {
       case 'en':
         return {
           'title': "I'm Muslim",
-          'welcome': "Welcome to I'm Muslim",
-          'quran': 'Holy Quran',
-          'prayer': 'Prayer Times',
-          'dhikr': 'Dhikr',
-          'tasbeeh': 'Tasbeeh',
+          'home': 'Home',
+          'quran': "Qur'an",
+          'dhikr': 'Adhkar',
+          'hadith': 'Hadith',
           'profile': 'Profile',
           'recitations': 'Recitation Majlis',
           'recitationsSub': 'Share and listen to Quran recitations',
+          'prayer': 'Prayer Times',
+          'tasbeeh': 'Tasbeeh',
+          'welcome': "Welcome to I'm Muslim",
         };
 
       case 'fr':
         return {
           'title': 'Je suis Musulman',
-          'welcome': 'Bienvenue dans Je suis Musulman',
+          'home': 'Accueil',
           'quran': 'Coran',
-          'prayer': 'Heures de prière',
-          'dhikr': 'Dhikr',
-          'tasbeeh': 'Tasbih',
+          'dhikr': 'Adhkar',
+          'hadith': 'Hadith',
           'profile': 'Profil',
           'recitations': 'Majlis de récitation',
-          'recitationsSub': 'Partagez et écoutez des récitations',
+          'recitationsSub': 'Partagez et écoutez les récitations',
+          'prayer': 'Heures de prière',
+          'tasbeeh': 'Tasbih',
+          'welcome': 'Bienvenue',
         };
 
       case 'tr':
         return {
           'title': 'Ben Müslümanım',
-          'welcome': 'Ben Müslümanım uygulamasına hoş geldiniz',
-          'quran': 'Kur’an-ı Kerim',
-          'prayer': 'Namaz Vakitleri',
+          'home': 'Ana Sayfa',
+          'quran': 'Kur’an',
           'dhikr': 'Zikir',
-          'tasbeeh': 'Tesbih',
+          'hadith': 'Hadis',
           'profile': 'Profil',
           'recitations': 'Tilavet Meclisi',
           'recitationsSub': 'Tilavetleri paylaş ve dinle',
+          'prayer': 'Namaz Vakitleri',
+          'tasbeeh': 'Tesbih',
+          'welcome': 'Hoş geldiniz',
         };
 
       case 'ur':
         return {
           'title': 'میں مسلمان ہوں',
-          'welcome': 'میں مسلمان ہوں ایپ میں خوش آمدید',
-          'quran': 'قرآن مجید',
-          'prayer': 'نماز کے اوقات',
+          'home': 'ہوم',
+          'quran': 'قرآن',
           'dhikr': 'اذکار',
-          'tasbeeh': 'تسبیح',
+          'hadith': 'حدیث',
           'profile': 'پروفائل',
           'recitations': 'تلاوت کی مجلس',
           'recitationsSub': 'تلاوتیں شیئر کریں اور سنیں',
+          'prayer': 'نماز کے اوقات',
+          'tasbeeh': 'تسبیح',
+          'welcome': 'خوش آمدید',
         };
 
       default:
         return {
           'title': 'أنا مسلم',
-          'welcome': 'مرحبًا بك في تطبيق أنا مسلم',
-          'quran': 'القرآن الكريم',
-          'prayer': 'أوقات الصلاة',
+          'home': 'الرئيسية',
+          'quran': 'القرآن',
           'dhikr': 'الأذكار',
-          'tasbeeh': 'المسبحة',
+          'hadith': 'الحديث',
           'profile': 'الملف الشخصي',
           'recitations': 'مجلس التلاوة',
           'recitationsSub': 'شارك واستمع إلى تلاوات القرآن',
+          'prayer': 'أوقات الصلاة',
+          'tasbeeh': 'المسبحة',
+          'welcome': 'مرحبًا بك في تطبيق أنا مسلم',
         };
     }
   }
@@ -82,7 +100,8 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = texts;
-    final isArabic = language == 'ar' || language == 'ur';
+    final isArabic =
+        widget.language == 'ar' || widget.language == 'ur';
 
     return Directionality(
       textDirection:
@@ -92,129 +111,363 @@ class HomePage extends StatelessWidget {
           title: Text(t['title']!),
           centerTitle: true,
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
 
-              Text(
-                t['welcome']!,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+        body: _buildBody(),
+
+        // الشريط السفلي
+        bottomNavigationBar: SafeArea(
+          child: Container(
+            height: 78,
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .surface,
+              boxShadow: const [
+                BoxShadow(
+                  blurRadius: 10,
+                  offset: Offset(0, -2),
+                  color: Colors.black12,
                 ),
-                textAlign: TextAlign.center,
+              ],
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
               ),
-
-              const SizedBox(height: 30),
-
-              // القرآن الكريم
-              _menuButton(
-                context,
-                Icons.menu_book,
-                t['quran']!,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => QuranPage(
-                        language: language,
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              // أوقات الصلاة
-              _menuButton(
-                context,
-                Icons.access_time,
-                t['prayer']!,
-              ),
-
-              // الأذكار
-              _menuButton(
-                context,
-                Icons.favorite,
-                t['dhikr']!,
-              ),
-
-              // المسبحة
-              _menuButton(
-                context,
-                Icons.touch_app,
-                t['tasbeeh']!,
-              ),
-
-              // الملف الشخصي
-              _menuButton(
-                context,
-                Icons.person,
-                t['profile']!,
-              ),
-
-              const SizedBox(height: 8),
-
-              // مجلس التلاوة
-              Card(
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: const Icon(
-                    Icons.menu_book,
-                    size: 38,
+              child: Row(
+                children: [
+                  _bottomItem(
+                    Icons.home_rounded,
+                    t['home']!,
+                    0,
                   ),
-                  title: Text(
+                  _bottomItem(
+                    Icons.menu_book_rounded,
+                    t['quran']!,
+                    1,
+                  ),
+                  _bottomItem(
+                    Icons.water_drop_rounded,
+                    t['dhikr']!,
+                    2,
+                  ),
+                  _bottomItem(
+                    Icons.auto_stories_rounded,
+                    t['hadith']!,
+                    3,
+                  ),
+                  _bottomItem(
+                    Icons.person_rounded,
+                    t['profile']!,
+                    4,
+                  ),
+                  _bottomItem(
+                    Icons.record_voice_over_rounded,
                     t['recitations']!,
-                    style: const TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    5,
                   ),
-                  subtitle: Text(
-                    t['recitationsSub']!,
-                  ),
-                  trailing: const Icon(
-                    Icons.arrow_forward_ios,
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => RecitationsPage(
-                          language: language,
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _menuButton(
-    BuildContext context,
+  Widget _buildBody() {
+    switch (selectedIndex) {
+      case 1:
+        return QuranPage(
+          language: widget.language,
+        );
+
+      case 4:
+        return ProfilePage(
+          language: widget.language,
+        );
+
+      case 5:
+        return RecitationsPage(
+          language: widget.language,
+        );
+
+      case 2:
+        return _simplePage(
+          Icons.favorite_rounded,
+          texts['dhikr']!,
+        );
+
+      case 3:
+        return _simplePage(
+          Icons.auto_stories_rounded,
+          texts['hadith']!,
+        );
+
+      default:
+        return _homeContent();
+    }
+  }
+
+  Widget _homeContent() {
+    final t = texts;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+
+          Text(
+            t['welcome']!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 28),
+
+          // القرآن
+          _menuCard(
+            Icons.menu_book_rounded,
+            t['quran']!,
+            () {
+              setState(() {
+                selectedIndex = 1;
+              });
+            },
+          ),
+
+          // أوقات الصلاة
+          _menuCard(
+            Icons.access_time_rounded,
+            t['prayer']!,
+            () {},
+          ),
+
+          // الأذكار
+          _menuCard(
+            Icons.favorite_rounded,
+            t['dhikr']!,
+            () {
+              setState(() {
+                selectedIndex = 2;
+              });
+            },
+          ),
+
+          // المسبحة
+          _menuCard(
+            Icons.touch_app_rounded,
+            t['tasbeeh']!,
+            () {},
+          ),
+
+          // الملف الشخصي
+          _menuCard(
+            Icons.person_rounded,
+            t['profile']!,
+            () {
+              setState(() {
+                selectedIndex = 4;
+              });
+            },
+          ),
+
+          const SizedBox(height: 10),
+
+          // مجلس التلاوة
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(18),
+              leading: const Icon(
+                Icons.record_voice_over_rounded,
+                size: 42,
+              ),
+              title: Text(
+                t['recitations']!,
+                style: const TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  t['recitationsSub']!,
+                ),
+              ),
+              trailing: const Icon(
+                Icons.arrow_forward_ios_rounded,
+              ),
+              onTap: () {
+                setState(() {
+                  selectedIndex = 5;
+                });
+              },
+            ),
+          ),
+
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _menuCard(
     IconData icon,
-    String text, {
-    VoidCallback? onTap,
-  }) {
+    String title,
+    VoidCallback onTap,
+  ) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
-      child: ElevatedButton.icon(
-        onPressed: onTap ?? () {},
-        icon: Icon(icon),
-        label: Text(
-          text,
-          style: const TextStyle(fontSize: 18),
+      child: Material(
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 22,
+              vertical: 18,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: Theme.of(context)
+                    .colorScheme
+                    .outlineVariant,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 28,
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 17,
+                ),
+              ],
+            ),
+          ),
         ),
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+      ),
+    );
+  }
+
+  Widget _bottomItem(
+    IconData icon,
+    String label,
+    int index,
+  ) {
+    final isSelected = selectedIndex == index;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedIndex = index;
+        });
+      },
+      child: Container(
+        width: 92,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 5,
+          vertical: 7,
         ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 27,
+              color: isSelected
+                  ? Theme.of(context)
+                      .colorScheme
+                      .primary
+                  : Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+                color: isSelected
+                    ? Theme.of(context)
+                        .colorScheme
+                        .primary
+                    : Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _simplePage(
+    IconData icon,
+    String title,
+  ) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 80,
+            color: Theme.of(context)
+                .colorScheme
+                .primary,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'قريبًا بإذن الله',
+            style: TextStyle(
+              fontSize: 17,
+            ),
+          ),
+        ],
       ),
     );
   }
