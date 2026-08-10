@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'quran_page.dart';
+import 'recitations_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String language;
@@ -26,18 +28,24 @@ class _ProfilePageState extends State<ProfilePage> {
           'juz': 'Juz 14 / 30',
           'lastRead': 'Last Read',
           'surah': 'Surah Al-Kahf',
-          'verses': 'Verse 1–74',
+          'verse': 'Verse 1–74',
           'savedHadith': 'Saved Hadiths',
           'hadiths': 'Hadiths',
           'tasbeeh': 'Tasbeeh Count',
-          'tasbeehWord': 'Tasbeeh',
+          'tasbeehText': 'Tasbeeh',
           'favorite': 'Favorite Adhkar',
           'adhkar': 'Adhkar',
           'profileInfo': 'Profile Information',
           'settings': 'Settings',
           'language': 'Language',
-          'darkMode': 'Dark Mode',
           'english': 'English',
+          'dark': 'Dark Mode',
+          'home': 'Home',
+          'quran': 'Qur’an',
+          'adhkarNav': 'Adhkar',
+          'hadithNav': 'Hadith',
+          'profile': 'Profile',
+          'majlis': 'Recitation Majlis',
         };
 
       case 'fr':
@@ -49,18 +57,24 @@ class _ProfilePageState extends State<ProfilePage> {
           'juz': 'Juz 14 / 30',
           'lastRead': 'Dernière lecture',
           'surah': 'Sourate Al-Kahf',
-          'verses': 'Versets 1–74',
+          'verse': 'Versets 1–74',
           'savedHadith': 'Hadiths enregistrés',
           'hadiths': 'Hadiths',
           'tasbeeh': 'Compteur de Tasbih',
-          'tasbeehWord': 'Tasbih',
+          'tasbeehText': 'Tasbih',
           'favorite': 'Adhkar favoris',
           'adhkar': 'Adhkar',
           'profileInfo': 'Informations du profil',
           'settings': 'Paramètres',
           'language': 'Langue',
-          'darkMode': 'Mode sombre',
           'english': 'Français',
+          'dark': 'Mode sombre',
+          'home': 'Accueil',
+          'quran': 'Coran',
+          'adhkarNav': 'Adhkar',
+          'hadithNav': 'Hadith',
+          'profile': 'Profil',
+          'majlis': 'Majlis de récitation',
         };
 
       case 'tr':
@@ -70,20 +84,26 @@ class _ProfilePageState extends State<ProfilePage> {
           'blessing': 'Allah seni bereketlendirsin 🌿',
           'quranProgress': 'Kur’an İlerlemesi',
           'juz': 'Cüz 14 / 30',
-          'lastRead': 'Son Okunan',
+          'lastRead': 'Son Okuma',
           'surah': 'Kehf Suresi',
-          'verses': 'Ayet 1–74',
+          'verse': 'Ayet 1–74',
           'savedHadith': 'Kaydedilen Hadisler',
           'hadiths': 'Hadis',
           'tasbeeh': 'Tesbih Sayacı',
-          'tasbeehWord': 'Tesbih',
+          'tasbeehText': 'Tesbih',
           'favorite': 'Favori Zikirler',
           'adhkar': 'Zikir',
           'profileInfo': 'Profil Bilgileri',
           'settings': 'Ayarlar',
           'language': 'Dil',
-          'darkMode': 'Karanlık Mod',
           'english': 'Türkçe',
+          'dark': 'Karanlık Mod',
+          'home': 'Ana Sayfa',
+          'quran': 'Kur’an',
+          'adhkarNav': 'Zikir',
+          'hadithNav': 'Hadis',
+          'profile': 'Profil',
+          'majlis': 'Tilavet Meclisi',
         };
 
       case 'ur':
@@ -91,22 +111,28 @@ class _ProfilePageState extends State<ProfilePage> {
           'title': 'پروفائل',
           'name': 'مسلمان',
           'blessing': 'اللہ آپ کو برکت دے 🌿',
-          'quranProgress': 'قرآن کی پیش رفت',
+          'quranProgress': 'قرآن کی پیشرفت',
           'juz': 'جز 14 / 30',
           'lastRead': 'آخری تلاوت',
           'surah': 'سورۃ الکہف',
-          'verses': 'آیات 1–74',
+          'verse': 'آیت 1–74',
           'savedHadith': 'محفوظ احادیث',
           'hadiths': 'احادیث',
           'tasbeeh': 'تسبیح کاؤنٹ',
-          'tasbeehWord': 'تسبیح',
+          'tasbeehText': 'تسبیح',
           'favorite': 'پسندیدہ اذکار',
           'adhkar': 'اذکار',
           'profileInfo': 'پروفائل کی معلومات',
           'settings': 'ترتیبات',
           'language': 'زبان',
-          'darkMode': 'ڈارک موڈ',
           'english': 'اردو',
+          'dark': 'ڈارک موڈ',
+          'home': 'ہوم',
+          'quran': 'قرآن',
+          'adhkarNav': 'اذکار',
+          'hadithNav': 'حدیث',
+          'profile': 'پروفائل',
+          'majlis': 'تلاوت کی مجلس',
         };
 
       default:
@@ -118,18 +144,24 @@ class _ProfilePageState extends State<ProfilePage> {
           'juz': 'الجزء 14 / 30',
           'lastRead': 'آخر قراءة',
           'surah': 'سورة الكهف',
-          'verses': 'الآيات 1–74',
+          'verse': 'الآية 1–74',
           'savedHadith': 'الأحاديث المحفوظة',
           'hadiths': 'حديث',
-          'tasbeeh': 'عدد التسبيحات',
-          'tasbeehWord': 'تسبيح',
+          'tasbeeh': 'عداد التسبيح',
+          'tasbeehText': 'تسبيحة',
           'favorite': 'الأذكار المفضلة',
           'adhkar': 'أذكار',
           'profileInfo': 'معلومات الملف الشخصي',
           'settings': 'الإعدادات',
           'language': 'اللغة',
-          'darkMode': 'الوضع الداكن',
           'english': 'العربية',
+          'dark': 'الوضع الداكن',
+          'home': 'الرئيسية',
+          'quran': 'القرآن',
+          'adhkarNav': 'الأذكار',
+          'hadithNav': 'الحديث',
+          'profile': 'البروفايل',
+          'majlis': 'مجلس التلاوة',
         };
     }
   }
@@ -143,313 +175,324 @@ class _ProfilePageState extends State<ProfilePage> {
     return Directionality(
       textDirection:
           isArabic ? TextDirection.rtl : TextDirection.ltr,
-      child: Theme(
-        data: darkMode
-            ? ThemeData.dark(useMaterial3: true)
-            : ThemeData.light(useMaterial3: true),
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text(t['title']!),
-            centerTitle: true,
-          ),
+      child: Scaffold(
+        backgroundColor: darkMode
+            ? const Color(0xFF10251F)
+            : const Color(0xFFF4EDE1),
 
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              18,
-              10,
-              18,
-              30,
-            ),
-            child: Column(
-              children: [
-                // =========================
-                // الصورة والاسم
-                // =========================
-                const SizedBox(height: 8),
-
-                Stack(
-                  alignment: Alignment.bottomRight,
-                  children: [
-                    CircleAvatar(
-                      radius: 76,
-                      backgroundColor:
-                          Theme.of(context)
-                              .colorScheme
-                              .primaryContainer,
-                      child: const CircleAvatar(
-                        radius: 71,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.person,
-                          size: 80,
-                        ),
-                      ),
-                    ),
-
-                    Container(
-                      width: 45,
-                      height: 45,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surface,
-                        shape: BoxShape.circle,
-                        boxShadow: const [
-                          BoxShadow(
-                            blurRadius: 5,
-                            color: Colors.black26,
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.camera_alt,
-                          size: 23,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 14),
-
-                Text(
-                  t['name']!,
-                  style: const TextStyle(
-                    fontSize: 38,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Text(
-                  t['blessing']!,
-                  style: const TextStyle(
-                    fontSize: 17,
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                // =========================
-                // تقدم القرآن
-                // =========================
-                _quranProgress(context, t),
-
-                const SizedBox(height: 16),
-
-                // =========================
-                // آخر قراءة + الأحاديث
-                // =========================
-                Row(
-                  children: [
-                    Expanded(
-                      child: _statCard(
-                        context,
-                        icon: Icons.menu_book,
-                        title: t['lastRead']!,
-                        value: t['surah']!,
-                        subtitle: t['verses']!,
-                      ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    Expanded(
-                      child: _statCard(
-                        context,
-                        icon: Icons.favorite,
-                        title: t['savedHadith']!,
-                        value: '128',
-                        subtitle: t['hadiths']!,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                // =========================
-                // التسبيح + الأذكار
-                // =========================
-                Row(
-                  children: [
-                    Expanded(
-                      child: _statCard(
-                        context,
-                        icon: Icons.auto_awesome,
-                        title: t['tasbeeh']!,
-                        value: '2,458',
-                        subtitle: t['tasbeehWord']!,
-                      ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    Expanded(
-                      child: _statCard(
-                        context,
-                        icon: Icons.star,
-                        title: t['favorite']!,
-                        value: '23',
-                        subtitle: t['adhkar']!,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // =========================
-                // المعلومات والإعدادات
-                // =========================
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHighest
-                        .withOpacity(0.45),
-                    borderRadius:
-                        BorderRadius.circular(24),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(
+                    18,
+                    12,
+                    18,
+                    20,
                   ),
                   child: Column(
                     children: [
-                      _settingsItem(
-                        context,
-                        Icons.person,
-                        t['profileInfo']!,
-                        showArrow: true,
+                      // العنوان
+                      Row(
+                        mainAxisAlignment:
+                            MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "I’m Muslim",
+                            style: TextStyle(
+                              fontSize: 27,
+                              fontWeight: FontWeight.bold,
+                              color: darkMode
+                                  ? Colors.white
+                                  : const Color(0xFF173D32),
+                            ),
+                          ),
+                        ],
                       ),
 
-                      _divider(context),
+                      const SizedBox(height: 18),
 
-                      _settingsItem(
-                        context,
-                        Icons.settings,
-                        t['settings']!,
-                        showArrow: true,
+                      // دائرة البروفايل بدون صورة شخصية وبدون كاميرا
+                      Container(
+                        width: 118,
+                        height: 118,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFFE8DDCC),
+                          border: Border.all(
+                            color: const Color(0xFFF5F0E8),
+                            width: 6,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.person,
+                          size: 62,
+                          color: Color(0xFF55736B),
+                        ),
                       ),
 
-                      _divider(context),
+                      const SizedBox(height: 14),
 
-                      _settingsItem(
-                        context,
-                        Icons.language,
-                        t['language']!,
-                        trailingText: t['english']!,
-                        showArrow: true,
+                      Text(
+                        t['name']!,
+                        style: TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.bold,
+                          color: darkMode
+                              ? Colors.white
+                              : const Color(0xFF172D27),
+                        ),
                       ),
 
-                      _divider(context),
+                      const SizedBox(height: 4),
 
-                      _settingsItem(
-                        context,
-                        Icons.dark_mode,
-                        t['darkMode']!,
-                        switchValue: darkMode,
-                        onSwitchChanged: (value) {
-                          setState(() {
-                            darkMode = value;
-                          });
-                        },
+                      Text(
+                        t['blessing']!,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: darkMode
+                              ? Colors.white70
+                              : const Color(0xFF555555),
+                        ),
                       ),
+
+                      const SizedBox(height: 28),
+
+                      // تقدم القرآن
+                      _progressCard(
+                        context,
+                        t['quranProgress']!,
+                        t['juz']!,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // آخر قراءة + الأحاديث
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _smallCard(
+                              context,
+                              Icons.menu_book,
+                              t['lastRead']!,
+                              t['surah']!,
+                              t['verse']!,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: _smallCard(
+                              context,
+                              Icons.favorite,
+                              t['savedHadith']!,
+                              '128',
+                              t['hadiths']!,
+                              iconColor: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      // التسبيح + الأذكار
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _smallCard(
+                              context,
+                              Icons.circle_outlined,
+                              t['tasbeeh']!,
+                              '2,458',
+                              t['tasbeehText']!,
+                              iconColor:
+                                  const Color(0xFFB86F27),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: _smallCard(
+                              context,
+                              Icons.star,
+                              t['favorite']!,
+                              '23',
+                              t['adhkar']!,
+                              iconColor:
+                                  const Color(0xFFE6AA28),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      // معلومات الملف والإعدادات واللغة والوضع الداكن
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: darkMode
+                              ? const Color(0xFF19342C)
+                              : const Color(0xFFFFFAF2),
+                          borderRadius:
+                              BorderRadius.circular(24),
+                        ),
+                        child: Column(
+                          children: [
+                            _settingTile(
+                              context,
+                              Icons.person,
+                              t['profileInfo']!,
+                              onTap: () {},
+                            ),
+                            _divider(),
+                            _settingTile(
+                              context,
+                              Icons.settings,
+                              t['settings']!,
+                              onTap: () {},
+                            ),
+                            _divider(),
+                            _settingTile(
+                              context,
+                              Icons.language,
+                              t['language']!,
+                              trailingText: t['english']!,
+                              onTap: () {},
+                            ),
+                            _divider(),
+                            _settingTile(
+                              context,
+                              Icons.dark_mode,
+                              t['dark']!,
+                              trailing: Switch(
+                                value: darkMode,
+                                onChanged: (value) {
+                                  setState(() {
+                                    darkMode = value;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+
+              // الشريط السفلي
+              _bottomNavigation(context, t),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _quranProgress(
+  Widget _progressCard(
     BuildContext context,
-    Map<String, String> t,
+    String title,
+    String subtitle,
   ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context)
-            .colorScheme
-            .surfaceContainerHighest,
+        color: darkMode
+            ? const Color(0xFF19342C)
+            : const Color(0xFFFFFAF2),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            blurRadius: 8,
-            offset: Offset(0, 3),
-            color: Colors.black12,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 62,
-                height: 62,
-                decoration: BoxDecoration(
-                  borderRadius:
-                      BorderRadius.circular(14),
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primaryContainer,
-                ),
-                child: const Icon(
-                  Icons.menu_book,
-                  size: 36,
-                ),
-              ),
-
-              const SizedBox(width: 16),
-
-              Expanded(
-                child: Text(
-                  t['quranProgress']!,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-
-              const Text(
-                '45%',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
-          ClipRRect(
-            borderRadius:
-                BorderRadius.circular(20),
-            child: LinearProgressIndicator(
-              value: 0.45,
-              minHeight: 12,
+          Container(
+            width: 62,
+            height: 72,
+            decoration: BoxDecoration(
+              color: const Color(0xFF17604B),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.menu_book,
+              color: Color(0xFFEBCB78),
+              size: 38,
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(width: 16),
 
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(
-              t['juz']!,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.bold,
+                          color: darkMode
+                              ? Colors.white
+                              : Colors.black87,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '45%',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: darkMode
+                            ? Colors.white
+                            : Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                ClipRRect(
+                  borderRadius:
+                      BorderRadius.circular(20),
+                  child: LinearProgressIndicator(
+                    value: 0.45,
+                    minHeight: 10,
+                    backgroundColor:
+                        const Color(0xFFE5DED3),
+                    valueColor:
+                        const AlwaysStoppedAnimation(
+                      Color(0xFF17604B),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: darkMode
+                        ? Colors.white70
+                        : Colors.black87,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -457,28 +500,22 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _statCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String value,
-    required String subtitle,
+  Widget _smallCard(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String value,
+    String subtitle, {
+    Color iconColor = const Color(0xFF17604B),
   }) {
     return Container(
       height: 155,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Theme.of(context)
-            .colorScheme
-            .surfaceContainerHighest,
+        color: darkMode
+            ? const Color(0xFF19342C)
+            : const Color(0xFFFFFAF2),
         borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(
-            blurRadius: 6,
-            offset: Offset(0, 2),
-            color: Colors.black12,
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment:
@@ -486,7 +523,8 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           Icon(
             icon,
-            size: 38,
+            size: 45,
+            color: iconColor,
           ),
 
           const SizedBox(height: 8),
@@ -495,20 +533,26 @@ class _ProfilePageState extends State<ProfilePage> {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: 15,
+              color: darkMode
+                  ? Colors.white70
+                  : Colors.black87,
             ),
           ),
 
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
 
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 21,
               fontWeight: FontWeight.bold,
+              color: darkMode
+                  ? Colors.white
+                  : Colors.black87,
             ),
           ),
 
@@ -516,8 +560,11 @@ class _ProfilePageState extends State<ProfilePage> {
             subtitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
+            style: TextStyle(
+              fontSize: 13,
+              color: darkMode
+                  ? Colors.white70
+                  : Colors.black54,
             ),
           ),
         ],
@@ -525,67 +572,211 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _settingsItem(
+  Widget _settingTile(
     BuildContext context,
     IconData icon,
     String title, {
     String? trailingText,
-    bool showArrow = false,
-    bool? switchValue,
-    ValueChanged<bool>? onSwitchChanged,
+    Widget? trailing,
+    VoidCallback? onTap,
   }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: 22,
-        vertical: 5,
+        horizontal: 20,
+        vertical: 3,
       ),
       leading: Icon(
         icon,
         size: 29,
+        color: darkMode
+            ? Colors.white70
+            : const Color(0xFF536761),
       ),
       title: Text(
         title,
-        style: const TextStyle(
-          fontSize: 18,
+        style: TextStyle(
+          fontSize: 17,
           fontWeight: FontWeight.w500,
+          color: darkMode
+              ? Colors.white
+              : Colors.black87,
         ),
       ),
-      trailing: switchValue != null
-          ? Switch(
-              value: switchValue,
-              onChanged: onSwitchChanged,
-            )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (trailingText != null)
-                  Text(
-                    trailingText,
-                    style: const TextStyle(
-                      fontSize: 16,
-                    ),
+      trailing: trailing ??
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (trailingText != null)
+                Text(
+                  trailingText,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: darkMode
+                        ? Colors.white60
+                        : Colors.black54,
                   ),
-                if (showArrow)
-                  const SizedBox(width: 10),
-                if (showArrow)
-                  const Icon(
-                    Icons.arrow_forward_ios,
-                    size: 18,
-                  ),
-              ],
-            ),
-      onTap: () {},
+                ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 17,
+              ),
+            ],
+          ),
+      onTap: onTap,
     );
   }
 
-  Widget _divider(BuildContext context) {
+  Widget _divider() {
     return Divider(
       height: 1,
-      indent: 22,
-      endIndent: 22,
-      color: Theme.of(context)
-          .colorScheme
-          .outlineVariant,
+      indent: 20,
+      endIndent: 20,
+      color: darkMode
+          ? Colors.white12
+          : Colors.black12,
+    );
+  }
+
+  Widget _bottomNavigation(
+    BuildContext context,
+    Map<String, String> t,
+  ) {
+    return Container(
+      height: 82,
+      decoration: BoxDecoration(
+        color: darkMode
+            ? const Color(0xFF17352D)
+            : const Color(0xFFFFFAF2),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(28),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 12,
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: [
+            _navItem(
+              context,
+              Icons.home_outlined,
+              t['home']!,
+              false,
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+
+            _navItem(
+              context,
+              Icons.menu_book_outlined,
+              t['quran']!,
+              false,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => QuranPage(
+                      language: widget.language,
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            _navItem(
+              context,
+              Icons.favorite_border,
+              t['adhkarNav']!,
+              false,
+            ),
+
+            _navItem(
+              context,
+              Icons.auto_stories_outlined,
+              t['hadithNav']!,
+              false,
+            ),
+
+            _navItem(
+              context,
+              Icons.menu_book,
+              t['majlis']!,
+              false,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RecitationsPage(
+                      language: widget.language,
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            _navItem(
+              context,
+              Icons.person,
+              t['profile']!,
+              true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _navItem(
+    BuildContext context,
+    IconData icon,
+    String label,
+    bool selected, {
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        width: 88,
+        child: Column(
+          mainAxisAlignment:
+              MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 29,
+              color: selected
+                  ? const Color(0xFF17604B)
+                  : (darkMode
+                      ? Colors.white70
+                      : Colors.black54),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+                color: selected
+                    ? const Color(0xFF17604B)
+                    : (darkMode
+                        ? Colors.white70
+                        : Colors.black54),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
