@@ -81,6 +81,38 @@ class _HomePageState extends State<HomePage> {
           'welcome': 'خوش آمدید',
         };
 
+      case 'id':
+        return {
+          'title': 'Saya Muslim',
+          'home': 'Beranda',
+          'quran': 'Al-Qur’an',
+          'dhikr': 'Dzikir',
+          'hadith': 'Hadis',
+          'profile': 'Profil',
+          'recitations': 'Majelis Tilawah',
+          'recitationsSub':
+              'Bagikan dan dengarkan tilawah Al-Qur’an',
+          'prayer': 'Waktu Salat',
+          'tasbeeh': 'Tasbih',
+          'welcome': 'Selamat datang di Saya Muslim',
+        };
+
+      case 'ms':
+        return {
+          'title': 'Saya Muslim',
+          'home': 'Utama',
+          'quran': 'Al-Quran',
+          'dhikr': 'Zikir',
+          'hadith': 'Hadis',
+          'profile': 'Profil',
+          'recitations': 'Majlis Tilawah',
+          'recitationsSub':
+              'Kongsi dan dengar bacaan Al-Quran',
+          'prayer': 'Waktu Solat',
+          'tasbeeh': 'Tasbih',
+          'welcome': 'Selamat datang ke Saya Muslim',
+        };
+
       default:
         return {
           'title': 'أنا مسلم',
@@ -157,7 +189,6 @@ class _HomePageState extends State<HomePage> {
                     2,
                   ),
 
-                  // المسبحة
                   _bottomItem(
                     Icons.touch_app_rounded,
                     t['tasbeeh']!,
@@ -275,7 +306,6 @@ class _HomePageState extends State<HomePage> {
             },
           ),
 
-          // المسبحة
           _menuCard(
             Icons.touch_app_rounded,
             t['tasbeeh']!,
