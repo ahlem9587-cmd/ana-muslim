@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'quran_page.dart';
 import 'recitations_page.dart';
 import 'profile_page.dart';
+import 'tasbeeh_page.dart';
 
 class HomePage extends StatefulWidget {
   final String language;
@@ -100,8 +101,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final t = texts;
+
     final isArabic =
-        widget.language == 'ar' || widget.language == 'ur';
+        widget.language == 'ar' ||
+        widget.language == 'ur';
 
     return Directionality(
       textDirection:
@@ -114,7 +117,6 @@ class _HomePageState extends State<HomePage> {
 
         body: _buildBody(),
 
-        // الشريط السفلي
         bottomNavigationBar: SafeArea(
           child: Container(
             height: 78,
@@ -142,30 +144,42 @@ class _HomePageState extends State<HomePage> {
                     t['home']!,
                     0,
                   ),
+
                   _bottomItem(
                     Icons.menu_book_rounded,
                     t['quran']!,
                     1,
                   ),
+
                   _bottomItem(
                     Icons.water_drop_rounded,
                     t['dhikr']!,
                     2,
                   ),
+
+                  // المسبحة
+                  _bottomItem(
+                    Icons.touch_app_rounded,
+                    t['tasbeeh']!,
+                    3,
+                  ),
+
                   _bottomItem(
                     Icons.auto_stories_rounded,
                     t['hadith']!,
-                    3,
+                    4,
                   ),
+
                   _bottomItem(
                     Icons.person_rounded,
                     t['profile']!,
-                    4,
+                    5,
                   ),
+
                   _bottomItem(
                     Icons.record_voice_over_rounded,
                     t['recitations']!,
-                    5,
+                    6,
                   ),
                 ],
               ),
@@ -183,12 +197,17 @@ class _HomePageState extends State<HomePage> {
           language: widget.language,
         );
 
-      case 4:
-        return ProfilePage(
+      case 3:
+        return TasbeehPage(
           language: widget.language,
         );
 
       case 5:
+        return ProfilePage(
+          language: widget.language,
+        );
+
+      case 6:
         return RecitationsPage(
           language: widget.language,
         );
@@ -199,7 +218,7 @@ class _HomePageState extends State<HomePage> {
           texts['dhikr']!,
         );
 
-      case 3:
+      case 4:
         return _simplePage(
           Icons.auto_stories_rounded,
           texts['hadith']!,
@@ -230,7 +249,6 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 28),
 
-          // القرآن
           _menuCard(
             Icons.menu_book_rounded,
             t['quran']!,
@@ -241,14 +259,12 @@ class _HomePageState extends State<HomePage> {
             },
           ),
 
-          // أوقات الصلاة
           _menuCard(
             Icons.access_time_rounded,
             t['prayer']!,
             () {},
           ),
 
-          // الأذكار
           _menuCard(
             Icons.favorite_rounded,
             t['dhikr']!,
@@ -263,23 +279,25 @@ class _HomePageState extends State<HomePage> {
           _menuCard(
             Icons.touch_app_rounded,
             t['tasbeeh']!,
-            () {},
+            () {
+              setState(() {
+                selectedIndex = 3;
+              });
+            },
           ),
 
-          // الملف الشخصي
           _menuCard(
             Icons.person_rounded,
             t['profile']!,
             () {
               setState(() {
-                selectedIndex = 4;
+                selectedIndex = 5;
               });
             },
           ),
 
           const SizedBox(height: 10),
 
-          // مجلس التلاوة
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(
@@ -309,7 +327,7 @@ class _HomePageState extends State<HomePage> {
               ),
               onTap: () {
                 setState(() {
-                  selectedIndex = 5;
+                  selectedIndex = 6;
                 });
               },
             ),
@@ -411,7 +429,9 @@ class _HomePageState extends State<HomePage> {
                       .colorScheme
                       .onSurfaceVariant,
             ),
+
             const SizedBox(height: 4),
+
             Text(
               label,
               maxLines: 1,
@@ -452,7 +472,9 @@ class _HomePageState extends State<HomePage> {
                 .colorScheme
                 .primary,
           ),
+
           const SizedBox(height: 20),
+
           Text(
             title,
             style: const TextStyle(
@@ -460,7 +482,9 @@ class _HomePageState extends State<HomePage> {
               fontWeight: FontWeight.bold,
             ),
           ),
+
           const SizedBox(height: 10),
+
           const Text(
             'قريبًا بإذن الله',
             style: TextStyle(
