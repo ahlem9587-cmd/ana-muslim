@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+
 import 'quran_page.dart';
 import 'recitations_page.dart';
 import 'profile_page.dart';
 import 'tasbeeh_page.dart';
+import 'adhkar_page.dart';
 
 class HomePage extends StatefulWidget {
   final String language;
@@ -124,7 +126,6 @@ class _HomePageState extends State<HomePage> {
           centerTitle: true,
         ),
 
-        // الصفحة الرئيسية أصبحت فاضية
         body: _buildBody(),
 
         bottomNavigationBar: SafeArea(
@@ -206,6 +207,14 @@ class _HomePageState extends State<HomePage> {
           language: widget.language,
         );
 
+      case 2:
+        // =========================
+        // صفحة الأذكار
+        // =========================
+        return AdhkarPage(
+          language: widget.language,
+        );
+
       case 3:
         return TasbeehPage(
           language: widget.language,
@@ -221,12 +230,6 @@ class _HomePageState extends State<HomePage> {
           language: widget.language,
         );
 
-      case 2:
-        return _simplePage(
-          Icons.favorite_rounded,
-          texts['dhikr']!,
-        );
-
       case 4:
         return _simplePage(
           Icons.auto_stories_rounded,
@@ -234,9 +237,44 @@ class _HomePageState extends State<HomePage> {
         );
 
       default:
-        // الهوم فاضي
-        return const SizedBox.expand();
+        return _homePage();
     }
+  }
+
+  Widget _homePage() {
+    final t = texts;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.mosque_rounded,
+            size: 80,
+            color: Color(0xFF17604B),
+          ),
+
+          const SizedBox(height: 20),
+
+          Text(
+            t['title']!,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          Text(
+            t['home']!,
+            style: const TextStyle(
+              fontSize: 18,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _bottomItem(
