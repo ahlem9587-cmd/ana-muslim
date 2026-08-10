@@ -25,6 +25,7 @@ flutter:
   assets:
     - assets/quran-uthmani.txt
     - assets/app_icon.png
+    - assets/hisn_almuslim.json
 
 flutter_launcher_icons:
   android: true
