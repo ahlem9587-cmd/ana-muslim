@@ -30,10 +30,7 @@ class _HomePageState extends State<HomePage> {
           'hadith': 'Hadith',
           'profile': 'Profile',
           'recitations': 'Recitation Majlis',
-          'recitationsSub': 'Share and listen to Quran recitations',
-          'prayer': 'Prayer Times',
           'tasbeeh': 'Tasbeeh',
-          'welcome': "Welcome to I'm Muslim",
         };
 
       case 'fr':
@@ -45,10 +42,7 @@ class _HomePageState extends State<HomePage> {
           'hadith': 'Hadith',
           'profile': 'Profil',
           'recitations': 'Majlis de récitation',
-          'recitationsSub': 'Partagez et écoutez les récitations',
-          'prayer': 'Heures de prière',
           'tasbeeh': 'Tasbih',
-          'welcome': 'Bienvenue',
         };
 
       case 'tr':
@@ -60,10 +54,7 @@ class _HomePageState extends State<HomePage> {
           'hadith': 'Hadis',
           'profile': 'Profil',
           'recitations': 'Tilavet Meclisi',
-          'recitationsSub': 'Tilavetleri paylaş ve dinle',
-          'prayer': 'Namaz Vakitleri',
           'tasbeeh': 'Tesbih',
-          'welcome': 'Hoş geldiniz',
         };
 
       case 'ur':
@@ -75,10 +66,7 @@ class _HomePageState extends State<HomePage> {
           'hadith': 'حدیث',
           'profile': 'پروفائل',
           'recitations': 'تلاوت کی مجلس',
-          'recitationsSub': 'تلاوتیں شیئر کریں اور سنیں',
-          'prayer': 'نماز کے اوقات',
           'tasbeeh': 'تسبیح',
-          'welcome': 'خوش آمدید',
         };
 
       case 'id':
@@ -90,11 +78,7 @@ class _HomePageState extends State<HomePage> {
           'hadith': 'Hadis',
           'profile': 'Profil',
           'recitations': 'Majelis Tilawah',
-          'recitationsSub':
-              'Bagikan dan dengarkan tilawah Al-Qur’an',
-          'prayer': 'Waktu Salat',
           'tasbeeh': 'Tasbih',
-          'welcome': 'Selamat datang di Saya Muslim',
         };
 
       case 'ms':
@@ -106,11 +90,7 @@ class _HomePageState extends State<HomePage> {
           'hadith': 'Hadis',
           'profile': 'Profil',
           'recitations': 'Majlis Tilawah',
-          'recitationsSub':
-              'Kongsi dan dengar bacaan Al-Quran',
-          'prayer': 'Waktu Solat',
           'tasbeeh': 'Tasbih',
-          'welcome': 'Selamat datang ke Saya Muslim',
         };
 
       default:
@@ -122,10 +102,7 @@ class _HomePageState extends State<HomePage> {
           'hadith': 'الحديث',
           'profile': 'الملف الشخصي',
           'recitations': 'مجلس التلاوة',
-          'recitationsSub': 'شارك واستمع إلى تلاوات القرآن',
-          'prayer': 'أوقات الصلاة',
           'tasbeeh': 'المسبحة',
-          'welcome': 'مرحبًا بك في تطبيق أنا مسلم',
         };
     }
   }
@@ -147,6 +124,7 @@ class _HomePageState extends State<HomePage> {
           centerTitle: true,
         ),
 
+        // الصفحة الرئيسية أصبحت فاضية
         body: _buildBody(),
 
         bottomNavigationBar: SafeArea(
@@ -256,174 +234,9 @@ class _HomePageState extends State<HomePage> {
         );
 
       default:
-        return _homeContent();
+        // الهوم فاضي
+        return const SizedBox.expand();
     }
-  }
-
-  Widget _homeContent() {
-    final t = texts;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-
-          Text(
-            t['welcome']!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 28),
-
-          _menuCard(
-            Icons.menu_book_rounded,
-            t['quran']!,
-            () {
-              setState(() {
-                selectedIndex = 1;
-              });
-            },
-          ),
-
-          _menuCard(
-            Icons.access_time_rounded,
-            t['prayer']!,
-            () {},
-          ),
-
-          _menuCard(
-            Icons.favorite_rounded,
-            t['dhikr']!,
-            () {
-              setState(() {
-                selectedIndex = 2;
-              });
-            },
-          ),
-
-          _menuCard(
-            Icons.touch_app_rounded,
-            t['tasbeeh']!,
-            () {
-              setState(() {
-                selectedIndex = 3;
-              });
-            },
-          ),
-
-          _menuCard(
-            Icons.person_rounded,
-            t['profile']!,
-            () {
-              setState(() {
-                selectedIndex = 5;
-              });
-            },
-          ),
-
-          const SizedBox(height: 10),
-
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(18),
-              leading: const Icon(
-                Icons.record_voice_over_rounded,
-                size: 42,
-              ),
-              title: Text(
-                t['recitations']!,
-                style: const TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  t['recitationsSub']!,
-                ),
-              ),
-              trailing: const Icon(
-                Icons.arrow_forward_ios_rounded,
-              ),
-              onTap: () {
-                setState(() {
-                  selectedIndex = 6;
-                });
-              },
-            ),
-          ),
-
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _menuCard(
-    IconData icon,
-    String title,
-    VoidCallback onTap,
-  ) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: Theme.of(context)
-            .colorScheme
-            .surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 22,
-              vertical: 18,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: Theme.of(context)
-                    .colorScheme
-                    .outlineVariant,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 28,
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 17,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _bottomItem(
