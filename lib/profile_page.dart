@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'quran_page.dart';
 import 'recitations_page.dart';
 
@@ -17,8 +18,38 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   bool darkMode = false;
 
-  // اسم الحساب
   String userName = '';
+
+  int tasbeehCount = 0;
+  String lastSurah = '—';
+  int favoriteAdhkarCount = 0;
+  int favoriteHadithCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
+    setState(() {
+      userName = prefs.getString('user_name') ?? '';
+      tasbeehCount = prefs.getInt('tasbeeh_count') ?? 0;
+      lastSurah = prefs.getString('last_surah') ?? '—';
+
+      final adhkar =
+          prefs.getStringList('favorite_adhkar') ?? [];
+      final hadith =
+          prefs.getStringList('favorite_hadith') ?? [];
+
+      favoriteAdhkarCount = adhkar.length;
+      favoriteHadithCount = hadith.length;
+    });
+  }
 
   Map<String, String> get texts {
     switch (widget.language) {
@@ -27,21 +58,15 @@ class _ProfilePageState extends State<ProfilePage> {
           'title': 'Profile',
           'chooseName': 'Choose your name',
           'blessing': 'May Allah bless you 🌿',
-          'quranProgress': 'Qur’an Progress',
-          'juz': 'Juz 14 / 30',
           'lastRead': 'Last Read',
-          'surah': 'Surah Al-Kahf',
-          'verse': 'Verse 1–74',
-          'savedHadith': 'Saved Hadiths',
+          'savedHadith': 'Favorite Hadiths',
           'hadiths': 'Hadiths',
           'tasbeeh': 'Tasbeeh Count',
           'tasbeehText': 'Tasbeeh',
           'favorite': 'Favorite Adhkar',
           'adhkar': 'Adhkar',
-          'profileInfo': 'Profile Information',
           'settings': 'Settings',
           'language': 'Language',
-          'english': 'English',
           'dark': 'Dark Mode',
           'home': 'Home',
           'quran': 'Qur’an',
@@ -53,6 +78,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'nameHint': 'Enter your name',
           'cancel': 'Cancel',
           'save': 'Save',
+          'surah': 'Last Surah',
         };
 
       case 'fr':
@@ -60,21 +86,15 @@ class _ProfilePageState extends State<ProfilePage> {
           'title': 'Profil',
           'chooseName': 'Choisissez votre nom',
           'blessing': 'Qu’Allah vous bénisse 🌿',
-          'quranProgress': 'Progression du Coran',
-          'juz': 'Juz 14 / 30',
           'lastRead': 'Dernière lecture',
-          'surah': 'Sourate Al-Kahf',
-          'verse': 'Versets 1–74',
-          'savedHadith': 'Hadiths enregistrés',
+          'savedHadith': 'Hadiths favoris',
           'hadiths': 'Hadiths',
           'tasbeeh': 'Compteur de Tasbih',
           'tasbeehText': 'Tasbih',
           'favorite': 'Adhkar favoris',
           'adhkar': 'Adhkar',
-          'profileInfo': 'Informations du profil',
           'settings': 'Paramètres',
           'language': 'Langue',
-          'english': 'Français',
           'dark': 'Mode sombre',
           'home': 'Accueil',
           'quran': 'Coran',
@@ -86,6 +106,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'nameHint': 'Entrez votre nom',
           'cancel': 'Annuler',
           'save': 'Enregistrer',
+          'surah': 'Dernière sourate',
         };
 
       case 'tr':
@@ -93,21 +114,15 @@ class _ProfilePageState extends State<ProfilePage> {
           'title': 'Profil',
           'chooseName': 'Adınızı seçin',
           'blessing': 'Allah seni bereketlendirsin 🌿',
-          'quranProgress': 'Kur’an İlerlemesi',
-          'juz': 'Cüz 14 / 30',
           'lastRead': 'Son Okuma',
-          'surah': 'Kehf Suresi',
-          'verse': 'Ayet 1–74',
-          'savedHadith': 'Kaydedilen Hadisler',
+          'savedHadith': 'Favori Hadisler',
           'hadiths': 'Hadis',
           'tasbeeh': 'Tesbih Sayacı',
           'tasbeehText': 'Tesbih',
           'favorite': 'Favori Zikirler',
           'adhkar': 'Zikir',
-          'profileInfo': 'Profil Bilgileri',
           'settings': 'Ayarlar',
           'language': 'Dil',
-          'english': 'Türkçe',
           'dark': 'Karanlık Mod',
           'home': 'Ana Sayfa',
           'quran': 'Kur’an',
@@ -119,6 +134,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'nameHint': 'Adınızı girin',
           'cancel': 'İptal',
           'save': 'Kaydet',
+          'surah': 'Son Sure',
         };
 
       case 'ur':
@@ -126,21 +142,15 @@ class _ProfilePageState extends State<ProfilePage> {
           'title': 'پروفائل',
           'chooseName': 'اپنا نام منتخب کریں',
           'blessing': 'اللہ آپ کو برکت دے 🌿',
-          'quranProgress': 'قرآن کی پیشرفت',
-          'juz': 'جز 14 / 30',
           'lastRead': 'آخری تلاوت',
-          'surah': 'سورۃ الکہف',
-          'verse': 'آیت 1–74',
-          'savedHadith': 'محفوظ احادیث',
+          'savedHadith': 'پسندیدہ احادیث',
           'hadiths': 'احادیث',
           'tasbeeh': 'تسبیح کاؤنٹ',
           'tasbeehText': 'تسبیح',
           'favorite': 'پسندیدہ اذکار',
           'adhkar': 'اذکار',
-          'profileInfo': 'پروفائل کی معلومات',
           'settings': 'ترتیبات',
           'language': 'زبان',
-          'english': 'اردو',
           'dark': 'ڈارک موڈ',
           'home': 'ہوم',
           'quran': 'قرآن',
@@ -152,6 +162,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'nameHint': 'اپنا نام لکھیں',
           'cancel': 'منسوخ',
           'save': 'محفوظ کریں',
+          'surah': 'آخری سورت',
         };
 
       default:
@@ -159,32 +170,27 @@ class _ProfilePageState extends State<ProfilePage> {
           'title': 'الملف الشخصي',
           'chooseName': 'اختر اسمك',
           'blessing': 'بارك الله فيك 🌿',
-          'quranProgress': 'تقدم القرآن',
-          'juz': 'الجزء 14 / 30',
           'lastRead': 'آخر قراءة',
-          'surah': 'سورة الكهف',
-          'verse': 'الآية 1–74',
-          'savedHadith': 'الأحاديث المحفوظة',
-          'hadiths': 'حديث',
+          'savedHadith': 'الأحاديث المفضلة',
+          'hadiths': 'أحاديث',
           'tasbeeh': 'عداد التسبيح',
           'tasbeehText': 'تسبيحة',
           'favorite': 'الأذكار المفضلة',
           'adhkar': 'أذكار',
-          'profileInfo': 'معلومات الملف الشخصي',
           'settings': 'الإعدادات',
           'language': 'اللغة',
-          'english': 'العربية',
           'dark': 'الوضع الداكن',
           'home': 'الرئيسية',
           'quran': 'القرآن',
           'adhkarNav': 'الأذكار',
-          'hadithNav': 'الحديث',
+          'hadithNav': 'الأحاديث',
           'profile': 'البروفايل',
           'majlis': 'مجلس التلاوة',
           'nameTitle': 'اختر اسمك',
           'nameHint': 'اكتب اسمك',
           'cancel': 'إلغاء',
           'save': 'حفظ',
+          'surah': 'آخر سورة',
         };
     }
   }
@@ -204,19 +210,11 @@ class _ProfilePageState extends State<ProfilePage> {
           content: TextField(
             controller: controller,
             autofocus: true,
-            textInputAction: TextInputAction.done,
             decoration: InputDecoration(
               hintText: t['nameHint']!,
               prefixIcon: const Icon(Icons.person),
               border: const OutlineInputBorder(),
             ),
-            onSubmitted: (_) {
-              final name = controller.text.trim();
-
-              if (name.isNotEmpty) {
-                Navigator.pop(dialogContext, name);
-              }
-            },
           ),
           actions: [
             TextButton(
@@ -240,11 +238,22 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
 
-    if (newName != null && newName.trim().isNotEmpty) {
-      setState(() {
-        userName = newName.trim();
-      });
+    if (newName == null || newName.trim().isEmpty) {
+      return;
     }
+
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString(
+      'user_name',
+      newName.trim(),
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      userName = newName.trim();
+    });
   }
 
   @override
@@ -269,17 +278,19 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             children: [
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
-                    18,
-                    12,
-                    18,
-                    20,
-                  ),
-                  child: Column(
+                child: RefreshIndicator(
+                  onRefresh: _loadProfileData,
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(
+                      18,
+                      20,
+                      18,
+                      25,
+                    ),
                     children: [
                       Text(
                         "I’m Muslim",
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 27,
                           fontWeight: FontWeight.bold,
@@ -289,14 +300,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
 
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 24),
 
-                      // الصورة الشخصية
                       GestureDetector(
                         onTap: _chooseName,
                         child: Container(
-                          width: 118,
-                          height: 118,
+                          width: 105,
+                          height: 105,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: const Color(0xFFE8DDCC),
@@ -307,7 +317,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           child: const Icon(
                             Icons.person,
-                            size: 62,
+                            size: 58,
                             color: Color(0xFF55736B),
                           ),
                         ),
@@ -315,7 +325,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       const SizedBox(height: 14),
 
-                      // اسم المستخدم
                       GestureDetector(
                         onTap: _chooseName,
                         child: Row(
@@ -327,7 +336,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 displayName,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  fontSize: 30,
+                                  fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                   color: userName.isEmpty
                                       ? const Color(0xFF17604B)
@@ -342,7 +351,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             const SizedBox(width: 8),
                             Icon(
                               Icons.edit,
-                              size: 20,
+                              size: 19,
                               color: darkMode
                                   ? Colors.white70
                                   : const Color(0xFF55736B),
@@ -351,12 +360,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
 
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 5),
 
                       Text(
                         t['blessing']!,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           color: darkMode
                               ? Colors.white70
                               : const Color(0xFF555555),
@@ -365,37 +375,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       const SizedBox(height: 28),
 
-                      _progressCard(
-                        context,
-                        t['quranProgress']!,
-                        t['juz']!,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _smallCard(
-                              context,
-                              Icons.menu_book,
-                              t['lastRead']!,
-                              t['surah']!,
-                              t['verse']!,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: _smallCard(
-                              context,
-                              Icons.favorite,
-                              t['savedHadith']!,
-                              '128',
-                              t['hadiths']!,
-                              iconColor: Colors.red,
-                            ),
-                          ),
-                        ],
+                      _infoCard(
+                        icon: Icons.menu_book_rounded,
+                        title: t['lastRead']!,
+                        value: lastSurah,
+                        iconColor:
+                            const Color(0xFF17604B),
                       ),
 
                       const SizedBox(height: 14),
@@ -404,11 +389,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: [
                           Expanded(
                             child: _smallCard(
-                              context,
-                              Icons.circle_outlined,
-                              t['tasbeeh']!,
-                              '2,458',
-                              t['tasbeehText']!,
+                              icon: Icons.touch_app_rounded,
+                              title: t['tasbeeh']!,
+                              value: '$tasbeehCount',
+                              subtitle: t['tasbeehText']!,
                               iconColor:
                                   const Color(0xFFB86F27),
                             ),
@@ -416,19 +400,33 @@ class _ProfilePageState extends State<ProfilePage> {
                           const SizedBox(width: 14),
                           Expanded(
                             child: _smallCard(
-                              context,
-                              Icons.star,
-                              t['favorite']!,
-                              '23',
-                              t['adhkar']!,
+                              icon: Icons.star_rounded,
+                              title: t['favorite']!,
+                              value:
+                                  '$favoriteAdhkarCount',
+                              subtitle: t['adhkar']!,
                               iconColor:
                                   const Color(0xFFE6AA28),
+                              onTap: () {},
                             ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 14),
+
+                      _smallCard(
+                        icon: Icons.star_rounded,
+                        title: t['savedHadith']!,
+                        value: '$favoriteHadithCount',
+                        subtitle: t['hadiths']!,
+                        iconColor:
+                            const Color(0xFFE6AA28),
+                        fullWidth: true,
+                        onTap: () {},
+                      ),
+
+                      const SizedBox(height: 20),
 
                       Container(
                         width: double.infinity,
@@ -442,30 +440,24 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: Column(
                           children: [
                             _settingTile(
-                              context,
                               Icons.person,
-                              t['profileInfo']!,
+                              t['chooseName']!,
                               onTap: _chooseName,
                             ),
                             _divider(),
                             _settingTile(
-                              context,
                               Icons.settings,
                               t['settings']!,
                               onTap: () {},
                             ),
                             _divider(),
                             _settingTile(
-                              context,
                               Icons.language,
                               t['language']!,
-                              trailingText:
-                                  t['english']!,
                               onTap: () {},
                             ),
                             _divider(),
                             _settingTile(
-                              context,
                               Icons.dark_mode,
                               t['dark']!,
                               trailing: Switch(
@@ -480,8 +472,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           ],
                         ),
                       ),
-
-                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -495,89 +485,53 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _progressCard(
-    BuildContext context,
-    String title,
-    String subtitle,
-  ) {
+  Widget _infoCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color iconColor,
+  }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: darkMode
             ? const Color(0xFF19342C)
             : const Color(0xFFFFFAF2),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
       ),
       child: Row(
         children: [
-          Container(
-            width: 62,
-            height: 72,
-            decoration: BoxDecoration(
-              color: const Color(0xFF17604B),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.menu_book,
-              color: Color(0xFFEBCB78),
-              size: 38,
-            ),
+          Icon(
+            icon,
+            size: 42,
+            color: iconColor,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 15),
           Expanded(
             child: Column(
               crossAxisAlignment:
                   CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.bold,
-                          color: darkMode
-                              ? Colors.white
-                              : Colors.black87,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '45%',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: darkMode
-                            ? Colors.white
-                            : Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius:
-                      BorderRadius.circular(20),
-                  child: LinearProgressIndicator(
-                    value: 0.45,
-                    minHeight: 10,
-                    backgroundColor:
-                        const Color(0xFFE5DED3),
-                    valueColor:
-                        const AlwaysStoppedAnimation(
-                      Color(0xFF17604B),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
                 Text(
-                  subtitle,
+                  title,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     color: darkMode
                         ? Colors.white70
+                        : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.bold,
+                    color: darkMode
+                        ? Colors.white
                         : Colors.black87,
                   ),
                 ),
@@ -589,16 +543,18 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _smallCard(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String value,
-    String subtitle, {
-    Color iconColor = const Color(0xFF17604B),
+  Widget _smallCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required String subtitle,
+    required Color iconColor,
+    bool fullWidth = false,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      height: 155,
+    final card = Container(
+      width: double.infinity,
+      height: fullWidth ? 120 : 145,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: darkMode
@@ -612,26 +568,24 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           Icon(
             icon,
-            size: 45,
+            size: 35,
             color: iconColor,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 7),
           Text(
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 14,
               color: darkMode
                   ? Colors.white70
                   : Colors.black87,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(
             value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 21,
               fontWeight: FontWeight.bold,
@@ -642,10 +596,8 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           Text(
             subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               color: darkMode
                   ? Colors.white70
                   : Colors.black54,
@@ -654,13 +606,21 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
     );
+
+    if (onTap == null) {
+      return card;
+    }
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(22),
+      onTap: onTap,
+      child: card,
+    );
   }
 
   Widget _settingTile(
-    BuildContext context,
     IconData icon,
     String title, {
-    String? trailingText,
     Widget? trailing,
     VoidCallback? onTap,
   }) {
@@ -671,7 +631,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       leading: Icon(
         icon,
-        size: 29,
+        size: 28,
         color: darkMode
             ? Colors.white70
             : const Color(0xFF536761),
@@ -687,25 +647,9 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       trailing: trailing ??
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (trailingText != null)
-                Text(
-                  trailingText,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: darkMode
-                        ? Colors.white60
-                        : Colors.black54,
-                  ),
-                ),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 17,
-              ),
-            ],
+          const Icon(
+            Icons.arrow_forward_ios,
+            size: 17,
           ),
       onTap: onTap,
     );
@@ -727,7 +671,7 @@ class _ProfilePageState extends State<ProfilePage> {
     Map<String, String> t,
   ) {
     return Container(
-      height: 82,
+      height: 78,
       decoration: BoxDecoration(
         color: darkMode
             ? const Color(0xFF17352D)
@@ -738,11 +682,9 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
         child: Row(
           children: [
             _navItem(
-              context,
               Icons.home_outlined,
               t['home']!,
               false,
@@ -751,7 +693,6 @@ class _ProfilePageState extends State<ProfilePage> {
               },
             ),
             _navItem(
-              context,
               Icons.menu_book_outlined,
               t['quran']!,
               false,
@@ -767,19 +708,16 @@ class _ProfilePageState extends State<ProfilePage> {
               },
             ),
             _navItem(
-              context,
               Icons.favorite_border,
               t['adhkarNav']!,
               false,
             ),
             _navItem(
-              context,
               Icons.auto_stories_outlined,
               t['hadithNav']!,
               false,
             ),
             _navItem(
-              context,
               Icons.menu_book,
               t['majlis']!,
               false,
@@ -795,7 +733,6 @@ class _ProfilePageState extends State<ProfilePage> {
               },
             ),
             _navItem(
-              context,
               Icons.person,
               t['profile']!,
               true,
@@ -807,7 +744,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _navItem(
-    BuildContext context,
     IconData icon,
     String label,
     bool selected, {
@@ -823,20 +759,20 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             Icon(
               icon,
-              size: 29,
+              size: 27,
               color: selected
                   ? const Color(0xFF17604B)
                   : (darkMode
                       ? Colors.white70
                       : Colors.black54),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: selected
                     ? FontWeight.bold
                     : FontWeight.normal,
