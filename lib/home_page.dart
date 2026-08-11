@@ -6,6 +6,7 @@ import 'profile_page.dart';
 import 'tasbeeh_page.dart';
 import 'adhkar_page.dart';
 import 'hadith_page.dart';
+import 'prayer_page.dart';
 
 class HomePage extends StatefulWidget {
   final String language;
@@ -34,6 +35,7 @@ class _HomePageState extends State<HomePage> {
           'profile': 'Profile',
           'recitations': 'Recitation Majlis',
           'tasbeeh': 'Tasbeeh',
+          'prayer': 'Prayer',
         };
 
       case 'fr':
@@ -46,6 +48,7 @@ class _HomePageState extends State<HomePage> {
           'profile': 'Profil',
           'recitations': 'Majlis de récitation',
           'tasbeeh': 'Tasbih',
+          'prayer': 'Prière',
         };
 
       case 'tr':
@@ -58,6 +61,7 @@ class _HomePageState extends State<HomePage> {
           'profile': 'Profil',
           'recitations': 'Tilavet Meclisi',
           'tasbeeh': 'Tesbih',
+          'prayer': 'Namaz',
         };
 
       case 'ur':
@@ -70,6 +74,7 @@ class _HomePageState extends State<HomePage> {
           'profile': 'پروفائل',
           'recitations': 'تلاوت کی مجلس',
           'tasbeeh': 'تسبیح',
+          'prayer': 'نماز',
         };
 
       case 'id':
@@ -82,6 +87,7 @@ class _HomePageState extends State<HomePage> {
           'profile': 'Profil',
           'recitations': 'Majelis Tilawah',
           'tasbeeh': 'Tasbih',
+          'prayer': 'Shalat',
         };
 
       case 'ms':
@@ -94,6 +100,7 @@ class _HomePageState extends State<HomePage> {
           'profile': 'Profil',
           'recitations': 'Majlis Tilawah',
           'tasbeeh': 'Tasbih',
+          'prayer': 'Solat',
         };
 
       default:
@@ -106,6 +113,7 @@ class _HomePageState extends State<HomePage> {
           'profile': 'الملف الشخصي',
           'recitations': 'مجلس التلاوة',
           'tasbeeh': 'المسبحة',
+          'prayer': 'الصلاة',
         };
     }
   }
@@ -126,9 +134,7 @@ class _HomePageState extends State<HomePage> {
           title: Text(t['title']!),
           centerTitle: true,
         ),
-
         body: _buildBody(),
-
         bottomNavigationBar: SafeArea(
           child: Container(
             height: 78,
@@ -182,15 +188,21 @@ class _HomePageState extends State<HomePage> {
                   ),
 
                   _bottomItem(
+                    Icons.mosque_rounded,
+                    t['prayer']!,
+                    5,
+                  ),
+
+                  _bottomItem(
                     Icons.person_rounded,
                     t['profile']!,
-                    5,
+                    6,
                   ),
 
                   _bottomItem(
                     Icons.record_voice_over_rounded,
                     t['recitations']!,
-                    6,
+                    7,
                   ),
                 ],
               ),
@@ -224,11 +236,16 @@ class _HomePageState extends State<HomePage> {
         );
 
       case 5:
-        return ProfilePage(
+        return PrayerPage(
           language: widget.language,
         );
 
       case 6:
+        return ProfilePage(
+          language: widget.language,
+        );
+
+      case 7:
         return RecitationsPage(
           language: widget.language,
         );
@@ -250,9 +267,7 @@ class _HomePageState extends State<HomePage> {
             size: 80,
             color: Color(0xFF17604B),
           ),
-
           const SizedBox(height: 20),
-
           Text(
             t['title']!,
             style: const TextStyle(
@@ -260,9 +275,7 @@ class _HomePageState extends State<HomePage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 10),
-
           Text(
             t['home']!,
             style: const TextStyle(
@@ -307,9 +320,7 @@ class _HomePageState extends State<HomePage> {
                       .colorScheme
                       .onSurfaceVariant,
             ),
-
             const SizedBox(height: 4),
-
             Text(
               label,
               maxLines: 1,
