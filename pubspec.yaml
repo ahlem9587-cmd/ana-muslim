@@ -35,6 +35,7 @@ flutter:
     - assets/hisn_almuslim.json
     - assets/sahih_al-bukhari_ahadith.utf8.csv
     - assets/sahih_muslim_ahadith.utf8.txt
+    - assets/Beautiful_adhan.ogg
 
 flutter_launcher_icons:
   android: true
