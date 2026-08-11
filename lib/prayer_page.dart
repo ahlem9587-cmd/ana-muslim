@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PrayerPage extends StatefulWidget {
   final String language;
@@ -25,6 +26,7 @@ class _PrayerPageState extends State<PrayerPage> {
   bool loading = true;
   bool notificationsEnabled = false;
   bool locationDisabled = false;
+  bool usingSavedLocation = false;
 
   Position? position;
   PrayerTimes? prayerTimes;
@@ -53,9 +55,14 @@ class _PrayerPageState extends State<PrayerPage> {
           'getting': 'Getting your location...',
           'enabled': 'Prayer notifications are enabled',
           'disabled': 'Prayer notifications are disabled',
-          'locationNote':
+          'locationError':
               'Please enable location to reset prayer times',
+          'savedLocation':
+              'Using your last saved location',
+          'updated':
+              'Prayer times have been updated',
           'soon': 'Will be available soon',
+          'refresh': 'Refresh Location',
           'fajr': 'Fajr',
           'dhuhr': 'Dhuhr',
           'asr': 'Asr',
@@ -74,11 +81,18 @@ class _PrayerPageState extends State<PrayerPage> {
           'rules': 'Règles de la prière',
           'adhan': 'Notifications de prière',
           'getting': 'Obtention de votre position...',
-          'enabled': 'Les notifications de prière sont activées',
-          'disabled': 'Les notifications de prière sont désactivées',
-          'locationNote':
+          'enabled':
+              'Les notifications de prière sont activées',
+          'disabled':
+              'Les notifications de prière sont désactivées',
+          'locationError':
               'Veuillez activer la localisation pour réinitialiser les heures de prière',
+          'savedLocation':
+              'Utilisation de votre dernière position enregistrée',
+          'updated':
+              'Les heures de prière ont été mises à jour',
           'soon': 'Disponible prochainement',
+          'refresh': 'Actualiser la localisation',
           'fajr': 'Fajr',
           'dhuhr': 'Dhohr',
           'asr': 'Asr',
@@ -99,9 +113,13 @@ class _PrayerPageState extends State<PrayerPage> {
           'getting': 'Konumunuz alınıyor...',
           'enabled': 'Namaz bildirimleri açık',
           'disabled': 'Namaz bildirimleri kapalı',
-          'locationNote':
-              'Namaz vakitlerini sıfırlamak için konumu açın',
+          'locationError':
+              'Namaz vakitlerini yenilemek için lütfen konumu açın',
+          'savedLocation':
+              'Son kaydedilen konumunuz kullanılıyor',
+          'updated': 'Namaz vakitleri güncellendi',
           'soon': 'Yakında kullanılabilir',
+          'refresh': 'Konumu Yenile',
           'fajr': 'Sabah',
           'dhuhr': 'Öğle',
           'asr': 'İkindi',
@@ -122,9 +140,13 @@ class _PrayerPageState extends State<PrayerPage> {
           'getting': 'آپ کا مقام حاصل کیا جا رہا ہے...',
           'enabled': 'نماز کی اطلاعات فعال ہیں',
           'disabled': 'نماز کی اطلاعات غیر فعال ہیں',
-          'locationNote':
+          'locationError':
               'نماز کے اوقات دوبارہ ترتیب دینے کے لیے مقام فعال کریں',
+          'savedLocation':
+              'آپ کا آخری محفوظ مقام استعمال کیا جا رہا ہے',
+          'updated': 'نماز کے اوقات اپ ڈیٹ ہوگئے',
           'soon': 'جلد دستیاب ہوگا',
+          'refresh': 'مقام تازہ کریں',
           'fajr': 'فجر',
           'dhuhr': 'ظہر',
           'asr': 'عصر',
@@ -145,9 +167,13 @@ class _PrayerPageState extends State<PrayerPage> {
           'getting': 'جارٍ الحصول على موقعك...',
           'enabled': 'إشعارات أوقات الصلاة مفعلة',
           'disabled': 'إشعارات أوقات الصلاة غير مفعلة',
-          'locationNote':
+          'locationError':
               'الرجاء تفعيل الموقع لإعادة ضبط مواقيت الصلاة',
+          'savedLocation':
+              'يتم استخدام آخر موقع محفوظ لديك',
+          'updated': 'تم تحديث أوقات الصلاة',
           'soon': 'ستتوفر قريبًا',
+          'refresh': 'تحديث الموقع',
           'fajr': 'الفجر',
           'dhuhr': 'الظهر',
           'asr': 'العصر',
@@ -160,18 +186,36 @@ class _PrayerPageState extends State<PrayerPage> {
   Future<void> _startPrayerPage() async {
     try {
       await _initializeNotifications();
-      await _getLocationAndPrayerTimes();
+
+      final bool gotCurrentLocation =
+          await _tryGetCurrentLocation();
+
+      if (!gotCurrentLocation) {
+        final bool gotSavedLocation =
+            await _loadSavedLocation();
+
+        if (!gotSavedLocation) {
+          throw Exception('No location available');
+        }
+
+        usingSavedLocation = true;
+        locationDisabled = true;
+      } else {
+        usingSavedLocation = false;
+        locationDisabled = false;
+      }
 
       if (mounted) {
         setState(() {
           loading = false;
-          locationDisabled = false;
         });
       }
     } catch (_) {
       if (mounted) {
         setState(() {
           loading = false;
+          locationDisabled = true;
+          prayerTimes = null;
         });
       }
     }
@@ -225,19 +269,12 @@ class _PrayerPageState extends State<PrayerPage> {
     await androidPlugin?.requestExactAlarmsPermission();
   }
 
-  Future<void> _getLocationAndPrayerTimes() async {
+  Future<bool> _tryGetCurrentLocation() async {
     final bool serviceEnabled =
         await Geolocator.isLocationServiceEnabled();
 
     if (!serviceEnabled) {
-      if (mounted) {
-        setState(() {
-          locationDisabled = true;
-          loading = false;
-        });
-      }
-
-      return;
+      return false;
     }
 
     LocationPermission permission =
@@ -249,29 +286,82 @@ class _PrayerPageState extends State<PrayerPage> {
 
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      if (mounted) {
-        setState(() {
-          locationDisabled = true;
-          loading = false;
-        });
-      }
-
-      return;
+      return false;
     }
 
-    position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.medium,
-      ),
-    );
+    try {
+      position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      );
+    } catch (_) {
+      return false;
+    }
 
-    final coordinates = Coordinates(
+    await _saveLocation(
       position!.latitude,
       position!.longitude,
     );
 
+    _calculatePrayerTimes(
+      position!.latitude,
+      position!.longitude,
+    );
+
+    return true;
+  }
+
+  Future<bool> _loadSavedLocation() async {
+    final SharedPreferences prefs =
+        await SharedPreferences.getInstance();
+
+    final double? latitude =
+        prefs.getDouble('saved_latitude');
+
+    final double? longitude =
+        prefs.getDouble('saved_longitude');
+
+    if (latitude == null || longitude == null) {
+      return false;
+    }
+
+    _calculatePrayerTimes(
+      latitude,
+      longitude,
+    );
+
+    return prayerTimes != null;
+  }
+
+  Future<void> _saveLocation(
+    double latitude,
+    double longitude,
+  ) async {
+    final SharedPreferences prefs =
+        await SharedPreferences.getInstance();
+
+    await prefs.setDouble(
+      'saved_latitude',
+      latitude,
+    );
+
+    await prefs.setDouble(
+      'saved_longitude',
+      longitude,
+    );
+  }
+
+  void _calculatePrayerTimes(
+    double latitude,
+    double longitude,
+  ) {
+    final coordinates =
+        Coordinates(latitude, longitude);
+
     final params =
-        CalculationMethod.muslim_world_league.getParameters();
+        CalculationMethod.muslim_world_league
+            .getParameters();
 
     params.madhab = Madhab.shafi;
 
@@ -279,32 +369,46 @@ class _PrayerPageState extends State<PrayerPage> {
       coordinates,
       params,
     );
-
-    if (mounted) {
-      setState(() {
-        locationDisabled = false;
-      });
-    }
   }
 
-  Future<void> _refreshLocation() async {
+  Future<void> _refreshPrayerTimes() async {
     setState(() {
       loading = true;
-      locationDisabled = false;
     });
 
-    await _getLocationAndPrayerTimes();
+    final bool success =
+        await _tryGetCurrentLocation();
 
     if (mounted) {
       setState(() {
         loading = false;
+        locationDisabled = !success;
+        usingSavedLocation = false;
       });
+
+      if (success) {
+        _showMessage(texts['updated']!);
+      } else {
+        final bool saved =
+            await _loadSavedLocation();
+
+        if (mounted) {
+          setState(() {
+            usingSavedLocation = saved;
+          });
+
+          if (!saved) {
+            _showMessage(
+              texts['locationError']!,
+            );
+          }
+        }
+      }
     }
   }
 
   Future<void> _schedulePrayerNotifications() async {
     if (prayerTimes == null) {
-      _showMessage(texts['locationNote']!);
       return;
     }
 
@@ -424,13 +528,13 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   String _formatTime(DateTime time) {
-    final String hourText =
+    final String hour =
         time.hour.toString().padLeft(2, '0');
 
-    final String minuteText =
+    final String minute =
         time.minute.toString().padLeft(2, '0');
 
-    return '$hourText:$minuteText';
+    return '$hour:$minute';
   }
 
   @override
@@ -472,109 +576,87 @@ class _PrayerPageState extends State<PrayerPage> {
                   ],
                 ),
               )
-            : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  if (locationDisabled)
-                    _buildLocationNotice(),
+            : RefreshIndicator(
+                color: const Color(0xFF17604B),
+                onRefresh: _refreshPrayerTimes,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    if (usingSavedLocation)
+                      _buildSavedLocationMessage(),
 
-                  if (locationDisabled)
+                    _buildPrayerTimesCard(),
+
                     const SizedBox(height: 14),
 
-                  _buildPrayerTimesCard(),
+                    _sectionCard(
+                      Icons.water_drop_rounded,
+                      t['wudu']!,
+                      t['soon']!,
+                      const Color(0xFF287A9E),
+                    ),
 
-                  const SizedBox(height: 14),
+                    _sectionCard(
+                      Icons.mosque_rounded,
+                      t['fard']!,
+                      t['soon']!,
+                      const Color(0xFF17604B),
+                    ),
 
-                  _sectionCard(
-                    context,
-                    Icons.water_drop_rounded,
-                    t['wudu']!,
-                    t['soon']!,
-                    const Color(0xFF287A9E),
-                  ),
+                    _sectionCard(
+                      Icons.star_rounded,
+                      t['sunnah']!,
+                      t['soon']!,
+                      const Color(0xFFE6AA28),
+                    ),
 
-                  _sectionCard(
-                    context,
-                    Icons.mosque_rounded,
-                    t['fard']!,
-                    t['soon']!,
-                    const Color(0xFF17604B),
-                  ),
+                    _sectionCard(
+                      Icons.menu_book_rounded,
+                      t['how']!,
+                      t['soon']!,
+                      const Color(0xFF17604B),
+                    ),
 
-                  _sectionCard(
-                    context,
-                    Icons.star_rounded,
-                    t['sunnah']!,
-                    t['soon']!,
-                    const Color(0xFFE6AA28),
-                  ),
+                    _sectionCard(
+                      Icons.info_outline_rounded,
+                      t['rules']!,
+                      t['soon']!,
+                      const Color(0xFF17604B),
+                    ),
 
-                  _sectionCard(
-                    context,
-                    Icons.menu_book_rounded,
-                    t['how']!,
-                    t['soon']!,
-                    const Color(0xFF17604B),
-                  ),
-
-                  _sectionCard(
-                    context,
-                    Icons.info_outline_rounded,
-                    t['rules']!,
-                    t['soon']!,
-                    const Color(0xFF17604B),
-                  ),
-
-                  _buildNotificationCard(),
-                ],
+                    _buildNotificationCard(),
+                  ],
+                ),
               ),
       ),
     );
   }
 
-  Widget _buildLocationNotice() {
-    final t = texts;
-
+  Widget _buildSavedLocationMessage() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFAF2),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: const Color(0xFFE7DDCE),
         ),
       ),
-      child: Column(
+      child: Row(
         children: [
           const Icon(
-            Icons.location_off_rounded,
+            Icons.location_on_rounded,
             color: Color(0xFF17604B),
-            size: 38,
           ),
-
-          const SizedBox(height: 10),
-
-          Text(
-            t['locationNote']!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF173D32),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          ElevatedButton.icon(
-            onPressed: _refreshLocation,
-            icon: const Icon(Icons.refresh_rounded),
-            label: Text(
-              widget.language == 'ar'
-                  ? 'إعادة المحاولة'
-                  : widget.language == 'en'
-                      ? 'Try Again'
-                      : 'Retry',
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              texts['savedLocation']!,
+              style: const TextStyle(
+                color: Color(0xFF173D32),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -591,14 +673,43 @@ class _PrayerPageState extends State<PrayerPage> {
         decoration: BoxDecoration(
           color: const Color(0xFFFFFAF2),
           borderRadius: BorderRadius.circular(22),
-        ),
-        child: Text(
-          t['locationNote']!,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF173D32),
+          border: Border.all(
+            color: const Color(0xFFE7DDCE),
           ),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.location_off_rounded,
+              size: 42,
+              color: Color(0xFF17604B),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              t['locationError']!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF173D32),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _refreshPrayerTimes,
+              icon: const Icon(
+                Icons.location_on_rounded,
+              ),
+              label: Text(
+                t['refresh']!,
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    const Color(0xFF17604B),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -619,29 +730,23 @@ class _PrayerPageState extends State<PrayerPage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 16),
-
           _prayerTimeRow(
             t['fajr']!,
             prayerTimes!.fajr,
           ),
-
           _prayerTimeRow(
             t['dhuhr']!,
             prayerTimes!.dhuhr,
           ),
-
           _prayerTimeRow(
             t['asr']!,
             prayerTimes!.asr,
           ),
-
           _prayerTimeRow(
             t['maghrib']!,
             prayerTimes!.maghrib,
           ),
-
           _prayerTimeRow(
             t['isha']!,
             prayerTimes!.isha,
@@ -751,7 +856,6 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   Widget _sectionCard(
-    BuildContext context,
     IconData icon,
     String title,
     String subtitle,
