@@ -5,6 +5,7 @@ import 'recitations_page.dart';
 import 'profile_page.dart';
 import 'tasbeeh_page.dart';
 import 'adhkar_page.dart';
+import 'hadith_page.dart';
 
 class HomePage extends StatefulWidget {
   final String language;
@@ -208,15 +209,17 @@ class _HomePageState extends State<HomePage> {
         );
 
       case 2:
-        // =========================
-        // صفحة الأذكار
-        // =========================
         return AdhkarPage(
           language: widget.language,
         );
 
       case 3:
         return TasbeehPage(
+          language: widget.language,
+        );
+
+      case 4:
+        return HadithPage(
           language: widget.language,
         );
 
@@ -228,12 +231,6 @@ class _HomePageState extends State<HomePage> {
       case 6:
         return RecitationsPage(
           language: widget.language,
-        );
-
-      case 4:
-        return _simplePage(
-          Icons.auto_stories_rounded,
-          texts['hadith']!,
         );
 
       default:
@@ -334,45 +331,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _simplePage(
-    IconData icon,
-    String title,
-  ) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            size: 80,
-            color: Theme.of(context)
-                .colorScheme
-                .primary,
-          ),
-
-          const SizedBox(height: 20),
-
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          const Text(
-            'قريبًا بإذن الله',
-            style: TextStyle(
-              fontSize: 17,
-            ),
-          ),
-        ],
       ),
     );
   }
