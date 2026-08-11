@@ -16,7 +16,7 @@ dependencies:
   image_picker: ^1.1.2
   shared_preferences: ^2.3.2
   geolocator: ^14.0.2
-  adhan: ^1.1.12
+  adhan: ^2.0.0+1
   flutter_local_notifications: ^19.4.0
   timezone: ^0.10.0
 
