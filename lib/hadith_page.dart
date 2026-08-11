@@ -41,6 +41,7 @@ class _HadithPageState extends State<HadithPage> {
           'loading': 'Loading hadiths...',
           'error': 'Could not load hadiths',
           'empty': 'No hadiths found',
+          'count': 'Hadiths',
         };
 
       case 'fr':
@@ -53,6 +54,7 @@ class _HadithPageState extends State<HadithPage> {
           'loading': 'Chargement des hadiths...',
           'error': 'Impossible de charger les hadiths',
           'empty': 'Aucun hadith trouvé',
+          'count': 'Hadiths',
         };
 
       case 'tr':
@@ -65,6 +67,7 @@ class _HadithPageState extends State<HadithPage> {
           'loading': 'Hadisler yükleniyor...',
           'error': 'Hadisler yüklenemedi',
           'empty': 'Hadis bulunamadı',
+          'count': 'Hadis',
         };
 
       case 'ur':
@@ -77,6 +80,7 @@ class _HadithPageState extends State<HadithPage> {
           'loading': 'احادیث لوڈ ہو رہی ہیں...',
           'error': 'احادیث لوڈ نہیں ہو سکیں',
           'empty': 'کوئی حدیث نہیں ملی',
+          'count': 'احادیث',
         };
 
       default:
@@ -89,66 +93,83 @@ class _HadithPageState extends State<HadithPage> {
           'loading': 'جاري تحميل الأحاديث...',
           'error': 'تعذر تحميل الأحاديث',
           'empty': 'لم يتم العثور على أحاديث',
+          'count': 'حديث',
         };
     }
   }
+
+  // ============================================================
+  // تحميل الأحاديث
+  // ============================================================
 
   Future<void> _loadHadiths() async {
     try {
       final List<HadithItem> result = [];
 
-      // =========================
+      // ========================================================
       // صحيح البخاري
-      // =========================
+      // ========================================================
 
       try {
-        final bukhariText = await rootBundle.loadString(
-          'assets/sahih_al_bukhari_ahadith.utf8.csv',
+        final String bukhariText = await rootBundle.loadString(
+          'assets/sahih_al-bukhari_ahadith.utf8.csv',
         );
 
-        result.addAll(
-          _parseCsv(
-            bukhariText,
-            'bukhari',
-          ),
+        final List<HadithItem> bukhari =
+            await _parseCsvAsync(
+          bukhariText,
+          'bukhari',
         );
-      } catch (_) {
-        // نكمل حتى لو تعذر تحميل الملف
+
+        result.addAll(bukhari);
+      } catch (e) {
+        debugPrint(
+          'Bukhari loading error: $e',
+        );
       }
 
-      // =========================
+      // ========================================================
       // صحيح مسلم
-      // =========================
+      // ========================================================
 
       try {
-        final muslimText = await rootBundle.loadString(
+        final String muslimText = await rootBundle.loadString(
           'assets/sahih_muslim_ahadith.utf8.txt',
         );
 
-        result.addAll(
-          _parseTextFile(
-            muslimText,
-            'muslim',
-          ),
+        final List<HadithItem> muslim =
+            await _parseTextFileAsync(
+          muslimText,
+          'muslim',
         );
-      } catch (_) {
-        // نكمل حتى لو تعذر تحميل الملف
+
+        result.addAll(muslim);
+      } catch (e) {
+        debugPrint(
+          'Muslim loading error: $e',
+        );
       }
 
-      // إزالة التكرار
-      final unique = <String, HadithItem>{};
+      // ========================================================
+      // حذف التكرار
+      // ========================================================
+
+      final Map<String, HadithItem> unique = {};
 
       for (final hadith in result) {
-        final key = _normalizeArabic(hadith.text);
+        final String key =
+            _normalizeArabic(hadith.text);
 
-        if (key.isEmpty) continue;
+        if (key.isEmpty) {
+          continue;
+        }
 
         if (!unique.containsKey(key)) {
           unique[key] = hadith;
         } else {
-          final old = unique[key]!;
+          final HadithItem old = unique[key]!;
 
-          // إذا وجد الحديث في البخاري ومسلم
+          // الحديث موجود في المصدرين
           if (old.source != hadith.source) {
             unique[key] = old.copyWith(
               source: 'both',
@@ -157,13 +178,24 @@ class _HadithPageState extends State<HadithPage> {
         }
       }
 
+      final List<HadithItem> finalHadiths =
+          unique.values.toList();
+
       if (!mounted) return;
 
       setState(() {
-        hadiths = unique.values.toList();
+        hadiths = finalHadiths;
         isLoading = false;
+
+        if (finalHadiths.isEmpty) {
+          errorMessage = texts['error'];
+        }
       });
     } catch (e) {
+      debugPrint(
+        'Hadith loading error: $e',
+      );
+
       if (!mounted) return;
 
       setState(() {
@@ -173,39 +205,54 @@ class _HadithPageState extends State<HadithPage> {
     }
   }
 
-  // =========================
-  // قراءة CSV
-  // =========================
+  // ============================================================
+  // قراءة CSV بشكل غير متزامن
+  // ============================================================
 
-  List<HadithItem> _parseCsv(
+  Future<List<HadithItem>> _parseCsvAsync(
     String content,
     String source,
-  ) {
-    final result = <HadithItem>[];
+  ) async {
+    final List<HadithItem> result = [];
 
-    final lines = const LineSplitter().convert(content);
+    final List<String> lines =
+        const LineSplitter().convert(content);
 
     for (int i = 0; i < lines.length; i++) {
-      final line = lines[i].trim();
+      final String line = lines[i].trim();
 
-      if (line.isEmpty) continue;
+      if (line.isEmpty) {
+        continue;
+      }
 
-      final columns = _splitCsvLine(line);
+      // نتجنب أول سطر إذا كان عنوان الأعمدة
+      if (i == 0 &&
+          (line.toLowerCase().contains('text') ||
+              line.toLowerCase().contains('hadith'))) {
+        continue;
+      }
 
-      if (columns.isEmpty) continue;
+      final List<String> columns =
+          _splitCsvLine(line);
+
+      if (columns.isEmpty) {
+        continue;
+      }
 
       String text = '';
 
-      // نحاول اختيار أطول عمود لأنه غالبًا نص الحديث
-      for (final column in columns) {
-        final value = column.trim();
+      // اختيار أطول عمود باعتباره نص الحديث
+      for (final String column in columns) {
+        final String value = column.trim();
 
         if (value.length > text.length) {
           text = value;
         }
       }
 
-      if (text.length < 15) continue;
+      if (text.length < 15) {
+        continue;
+      }
 
       result.add(
         HadithItem(
@@ -214,55 +261,89 @@ class _HadithPageState extends State<HadithPage> {
           number: '${i + 1}',
         ),
       );
+
+      // إعطاء Flutter فرصة لتحديث الواجهة
+      // حتى لا تبدو الصفحة معلقة
+      if (i % 300 == 0) {
+        await Future<void>.delayed(
+          Duration.zero,
+        );
+      }
     }
 
     return result;
   }
 
-  List<String> _splitCsvLine(String line) {
-    final result = <String>[];
-    final buffer = StringBuffer();
+  // ============================================================
+  // تقسيم CSV
+  // ============================================================
+
+  List<String> _splitCsvLine(
+    String line,
+  ) {
+    final List<String> result = [];
+
+    final StringBuffer buffer =
+        StringBuffer();
 
     bool insideQuotes = false;
 
     for (int i = 0; i < line.length; i++) {
-      final char = line[i];
+      final String char = line[i];
 
       if (char == '"') {
-        insideQuotes = !insideQuotes;
+        // إذا كان هناك "" داخل النص
+        if (insideQuotes &&
+            i + 1 < line.length &&
+            line[i + 1] == '"') {
+          buffer.write('"');
+          i++;
+        } else {
+          insideQuotes = !insideQuotes;
+        }
+
         continue;
       }
 
       if (char == ',' && !insideQuotes) {
-        result.add(buffer.toString());
+        result.add(
+          buffer.toString(),
+        );
+
         buffer.clear();
       } else {
         buffer.write(char);
       }
     }
 
-    result.add(buffer.toString());
+    result.add(
+      buffer.toString(),
+    );
 
     return result;
   }
 
-  // =========================
-  // قراءة TXT
-  // =========================
+  // ============================================================
+  // قراءة صحيح مسلم
+  // ============================================================
 
-  List<HadithItem> _parseTextFile(
+  Future<List<HadithItem>> _parseTextFileAsync(
     String content,
     String source,
-  ) {
-    final result = <HadithItem>[];
+  ) async {
+    final List<HadithItem> result = [];
 
-    final lines = const LineSplitter().convert(content);
+    final List<String> lines =
+        const LineSplitter().convert(content);
 
-    StringBuffer current = StringBuffer();
+    final StringBuffer current =
+        StringBuffer();
+
     int number = 0;
+    int processedLines = 0;
 
-    for (final rawLine in lines) {
-      final line = rawLine.trim();
+    for (final String rawLine in lines) {
+      final String line = rawLine.trim();
 
       if (line.isEmpty) {
         if (current.toString().trim().length >= 15) {
@@ -277,15 +358,22 @@ class _HadithPageState extends State<HadithPage> {
           );
         }
 
-        current = StringBuffer();
-        continue;
+        current.clear();
+      } else {
+        if (current.isNotEmpty) {
+          current.write(' ');
+        }
+
+        current.write(line);
       }
 
-      if (current.isNotEmpty) {
-        current.write(' ');
-      }
+      processedLines++;
 
-      current.write(line);
+      if (processedLines % 300 == 0) {
+        await Future<void>.delayed(
+          Duration.zero,
+        );
+      }
     }
 
     if (current.toString().trim().length >= 15) {
@@ -303,29 +391,55 @@ class _HadithPageState extends State<HadithPage> {
     return result;
   }
 
-  // =========================
-  // تنظيف النص لإزالة التكرار
-  // =========================
+  // ============================================================
+  // تنظيف النص للمقارنة وإزالة التكرار
+  // ============================================================
 
-  String _normalizeArabic(String text) {
+  String _normalizeArabic(
+    String text,
+  ) {
     return text
+        // التشكيل
         .replaceAll(
           RegExp(r'[\u064B-\u065F\u0670]'),
           '',
         )
+
+        // الهمزات
         .replaceAll('أ', 'ا')
         .replaceAll('إ', 'ا')
         .replaceAll('آ', 'ا')
         .replaceAll('ٱ', 'ا')
+
+        // الياء والألف المقصورة
         .replaceAll('ى', 'ي')
+
+        // التاء المربوطة
         .replaceAll('ة', 'ه')
-        .replaceAll(RegExp(r'[^\u0600-\u06FFa-zA-Z0-9]'), '')
+
+        // التطويل
+        .replaceAll('ـ', '')
+
+        // حذف علامات الوقف والترقيم
+        .replaceAll(
+          RegExp(
+            r'[^\u0600-\u06FFa-zA-Z0-9]',
+          ),
+          '',
+        )
+
         .toLowerCase()
         .trim();
   }
 
-  String _sourceName(String source) {
-    final t = texts;
+  // ============================================================
+  // اسم المصدر
+  // ============================================================
+
+  String _sourceName(
+    String source,
+  ) {
+    final Map<String, String> t = texts;
 
     if (source == 'bukhari') {
       return t['bukhari']!;
@@ -338,15 +452,25 @@ class _HadithPageState extends State<HadithPage> {
     return t['both']!;
   }
 
+  // ============================================================
+  // الواجهة
+  // ============================================================
+
   @override
-  Widget build(BuildContext context) {
-    final t = texts;
+  Widget build(
+    BuildContext context,
+  ) {
+    final Map<String, String> t = texts;
 
     return Directionality(
       textDirection:
-          isRtl ? TextDirection.rtl : TextDirection.ltr,
+          isRtl
+              ? TextDirection.rtl
+              : TextDirection.ltr,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4EDE1),
+        backgroundColor:
+            const Color(0xFFF4EDE1),
+
         appBar: AppBar(
           title: Text(
             t['title']!,
@@ -355,27 +479,16 @@ class _HadithPageState extends State<HadithPage> {
             ),
           ),
           centerTitle: true,
-          backgroundColor: const Color(0xFFF4EDE1),
+          backgroundColor:
+              const Color(0xFFF4EDE1),
           elevation: 0,
         ),
+
         body: isLoading
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(t['loading']!),
-                  ],
-                ),
-              )
-            : errorMessage != null
-                ? Center(
-                    child: Text(
-                      '${t['error']}\n$errorMessage',
-                      textAlign: TextAlign.center,
-                    ),
-                  )
+            ? _buildLoading()
+            : errorMessage != null &&
+                    hadiths.isEmpty
+                ? _buildError()
                 : _HadithList(
                     hadiths: hadiths,
                     texts: t,
@@ -385,11 +498,74 @@ class _HadithPageState extends State<HadithPage> {
       ),
     );
   }
+
+  // ============================================================
+  // شاشة التحميل
+  // ============================================================
+
+  Widget _buildLoading() {
+    final Map<String, String> t = texts;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment:
+            MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(
+            color: Color(0xFF17604B),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            t['loading']!,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Color(0xFF173D32),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // شاشة الخطأ
+  // ============================================================
+
+  Widget _buildError() {
+    final Map<String, String> t = texts;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment:
+              MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.menu_book_rounded,
+              size: 60,
+              color: Color(0xFF17604B),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              t['error']!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF173D32),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-// ======================================================
+// ================================================================
 // قائمة الأحاديث
-// ======================================================
+// ================================================================
 
 class _HadithList extends StatefulWidget {
   final List<HadithItem> hadiths;
@@ -405,26 +581,41 @@ class _HadithList extends StatefulWidget {
   });
 
   @override
-  State<_HadithList> createState() => _HadithListState();
+  State<_HadithList> createState() =>
+      _HadithListState();
 }
 
-class _HadithListState extends State<_HadithList> {
+class _HadithListState
+    extends State<_HadithList> {
   String search = '';
 
   @override
-  Widget build(BuildContext context) {
-    final filtered = widget.hadiths.where((hadith) {
-      if (search.trim().isEmpty) return true;
+  Widget build(
+    BuildContext context,
+  ) {
+    final String query =
+        search.trim().toLowerCase();
 
-      return hadith.text.toLowerCase().contains(
-            search.toLowerCase(),
-          );
+    final List<HadithItem> filtered =
+        widget.hadiths.where((hadith) {
+      if (query.isEmpty) {
+        return true;
+      }
+
+      return hadith.text
+          .toLowerCase()
+          .contains(query);
     }).toList();
 
     return Column(
       children: [
+        // ======================================================
+        // خانة البحث
+        // ======================================================
+
         Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding:
+              const EdgeInsets.fromLTRB(
             16,
             12,
             16,
@@ -436,109 +627,208 @@ class _HadithListState extends State<_HadithList> {
                 search = value;
               });
             },
-            decoration: InputDecoration(
-              hintText: widget.texts['search'],
-              prefixIcon: const Icon(
+            textDirection:
+                widget.isRtl
+                    ? TextDirection.rtl
+                    : TextDirection.ltr,
+            decoration:
+                InputDecoration(
+              hintText:
+                  widget.texts['search'],
+              prefixIcon:
+                  const Icon(
                 Icons.search_rounded,
+                color:
+                    Color(0xFF17604B),
               ),
               filled: true,
-              fillColor: const Color(0xFFFFFAF2),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide.none,
+              fillColor:
+                  const Color(0xFFFFFAF2),
+              border:
+                  OutlineInputBorder(
+                borderRadius:
+                    BorderRadius.circular(
+                  18,
+                ),
+                borderSide:
+                    BorderSide.none,
               ),
             ),
           ),
         ),
 
+        // ======================================================
+        // عدد الأحاديث
+        // ======================================================
+
         Padding(
-          padding: const EdgeInsets.symmetric(
+          padding:
+              const EdgeInsets.symmetric(
             horizontal: 18,
             vertical: 6,
           ),
           child: Align(
-            alignment: widget.isRtl
-                ? Alignment.centerRight
-                : Alignment.centerLeft,
+            alignment:
+                widget.isRtl
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
             child: Text(
-              '${filtered.length}',
-              style: const TextStyle(
-                color: Colors.black54,
+              '${filtered.length} ${widget.texts['count']}',
+              style:
+                  const TextStyle(
+                color:
+                    Colors.black54,
+                fontWeight:
+                    FontWeight.w600,
               ),
             ),
           ),
         ),
+
+        // ======================================================
+        // القائمة
+        // ======================================================
 
         Expanded(
           child: filtered.isEmpty
               ? Center(
                   child: Text(
                     widget.texts['empty']!,
+                    style:
+                        const TextStyle(
+                      color:
+                          Colors.black54,
+                      fontSize: 16,
+                    ),
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final hadith = filtered[index];
+                  padding:
+                      const EdgeInsets.all(
+                    16,
+                  ),
+                  itemCount:
+                      filtered.length,
+                  itemBuilder:
+                      (context, index) {
+                    final HadithItem hadith =
+                        filtered[index];
 
                     return Container(
-                      margin: const EdgeInsets.only(
+                      margin:
+                          const EdgeInsets.only(
                         bottom: 14,
                       ),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFFAF2),
+                      padding:
+                          const EdgeInsets.all(
+                        20,
+                      ),
+                      decoration:
+                          BoxDecoration(
+                        color:
+                            const Color(
+                          0xFFFFFAF2,
+                        ),
                         borderRadius:
-                            BorderRadius.circular(22),
-                        border: Border.all(
-                          color: const Color(0xFFE7DDCE),
+                            BorderRadius.circular(
+                          22,
+                        ),
+                        border:
+                            Border.all(
+                          color:
+                              const Color(
+                            0xFFE7DDCE,
+                          ),
                         ),
                       ),
                       child: Column(
                         crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                            CrossAxisAlignment
+                                .start,
                         children: [
+                          // ================================
+                          // نص الحديث
+                          // ================================
+
                           Text(
                             hadith.text,
-                            textAlign: widget.isRtl
-                                ? TextAlign.right
-                                : TextAlign.left,
-                            style: const TextStyle(
+                            textAlign:
+                                widget.isRtl
+                                    ? TextAlign
+                                        .right
+                                    : TextAlign
+                                        .left,
+                            style:
+                                const TextStyle(
                               fontSize: 18,
                               height: 1.8,
-                              color: Color(0xFF172D27),
+                              color:
+                                  Color(
+                                0xFF172D27,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 16),
+
+                          const SizedBox(
+                            height: 16,
+                          ),
+
                           const Divider(),
-                          const SizedBox(height: 8),
+
+                          const SizedBox(
+                            height: 8,
+                          ),
+
+                          // ================================
+                          // المصدر والرقم
+                          // ================================
+
                           Row(
                             children: [
                               const Icon(
-                                Icons.menu_book_rounded,
+                                Icons
+                                    .menu_book_rounded,
                                 size: 18,
-                                color: Color(0xFF17604B),
+                                color:
+                                    Color(
+                                  0xFF17604B,
+                                ),
                               ),
-                              const SizedBox(width: 7),
+
+                              const SizedBox(
+                                width: 7,
+                              ),
+
                               Expanded(
                                 child: Text(
-                                  widget.sourceName(
-                                    hadith.source,
+                                  widget
+                                      .sourceName(
+                                    hadith
+                                        .source,
                                   ),
-                                  style: const TextStyle(
+                                  style:
+                                      const TextStyle(
                                     fontWeight:
-                                        FontWeight.bold,
+                                        FontWeight
+                                            .bold,
                                     color:
-                                        Color(0xFF17604B),
+                                        Color(
+                                      0xFF17604B,
+                                    ),
                                   ),
                                 ),
                               ),
-                              if (hadith.number != null)
+
+                              if (hadith
+                                      .number !=
+                                  null)
                                 Text(
                                   '#${hadith.number}',
-                                  style: const TextStyle(
-                                    color: Colors.black45,
+                                  style:
+                                      const TextStyle(
+                                    color:
+                                        Colors
+                                            .black45,
                                   ),
                                 ),
                             ],
@@ -554,9 +844,9 @@ class _HadithListState extends State<_HadithList> {
   }
 }
 
-// ======================================================
+// ================================================================
 // نموذج الحديث
-// ======================================================
+// ================================================================
 
 class HadithItem {
   final String text;
