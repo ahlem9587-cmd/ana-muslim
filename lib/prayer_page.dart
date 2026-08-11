@@ -198,15 +198,22 @@ class _PrayerPageState extends State<PrayerPage> {
   Future<void> _initializeNotifications() async {
     tz.initializeTimeZones();
 
-    final timezoneInfo =
-        await FlutterTimezone.getLocalTimezone();
-
-    final String timezoneName = timezoneInfo.name;
-
     try {
-      tz.setLocalLocation(
-        tz.getLocation(timezoneName),
-      );
+      final timezoneInfo =
+          await FlutterTimezone.getLocalTimezone();
+
+      final String timezoneName =
+          timezoneInfo.identifier;
+
+      try {
+        tz.setLocalLocation(
+          tz.getLocation(timezoneName),
+        );
+      } catch (_) {
+        tz.setLocalLocation(
+          tz.getLocation('UTC'),
+        );
+      }
     } catch (_) {
       tz.setLocalLocation(
         tz.getLocation('UTC'),
@@ -237,7 +244,7 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   Future<void> _getLocationAndPrayerTimes() async {
-    bool serviceEnabled =
+    final bool serviceEnabled =
         await Geolocator.isLocationServiceEnabled();
 
     if (!serviceEnabled) {
@@ -328,7 +335,7 @@ class _PrayerPageState extends State<PrayerPage> {
   Future<void> _scheduleOnePrayer(
     _PrayerNotificationData prayer,
   ) async {
-    DateTime date = prayer.time;
+    final DateTime date = prayer.time;
 
     tz.TZDateTime scheduledDate = tz.TZDateTime(
       tz.local,
@@ -339,7 +346,9 @@ class _PrayerPageState extends State<PrayerPage> {
       date.minute,
     );
 
-    if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) {
+    if (scheduledDate.isBefore(
+      tz.TZDateTime.now(tz.local),
+    )) {
       scheduledDate = scheduledDate.add(
         const Duration(days: 1),
       );
@@ -362,12 +371,14 @@ class _PrayerPageState extends State<PrayerPage> {
       android: androidDetails,
     );
 
+    // هذه الصيغة متوافقة مع نسخة flutter_local_notifications
+    // الموجودة في مشروعك.
     await notifications.zonedSchedule(
-      id: prayer.id,
-      title: prayer.name,
-      body: prayer.name,
-      scheduledDate: scheduledDate,
-      notificationDetails: details,
+      prayer.id,
+      prayer.name,
+      prayer.name,
+      scheduledDate,
+      details,
       androidScheduleMode:
           AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents:
@@ -536,22 +547,27 @@ class _PrayerPageState extends State<PrayerPage> {
             ),
           ),
           const SizedBox(height: 16),
+
           _prayerTimeRow(
             t['fajr']!,
             prayerTimes!.fajr,
           ),
+
           _prayerTimeRow(
             t['dhuhr']!,
             prayerTimes!.dhuhr,
           ),
+
           _prayerTimeRow(
             t['asr']!,
             prayerTimes!.asr,
           ),
+
           _prayerTimeRow(
             t['maghrib']!,
             prayerTimes!.maghrib,
           ),
+
           _prayerTimeRow(
             t['isha']!,
             prayerTimes!.isha,
@@ -581,6 +597,7 @@ class _PrayerPageState extends State<PrayerPage> {
               fontWeight: FontWeight.w600,
             ),
           ),
+
           Text(
             _formatTime(time),
             style: const TextStyle(
@@ -612,6 +629,7 @@ class _PrayerPageState extends State<PrayerPage> {
           horizontal: 18,
           vertical: 8,
         ),
+
         leading: Container(
           width: 52,
           height: 52,
@@ -626,6 +644,7 @@ class _PrayerPageState extends State<PrayerPage> {
             size: 27,
           ),
         ),
+
         title: Text(
           t['adhan']!,
           style: const TextStyle(
@@ -634,6 +653,7 @@ class _PrayerPageState extends State<PrayerPage> {
             color: Color(0xFF173D32),
           ),
         ),
+
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 5),
           child: Text(
@@ -645,6 +665,7 @@ class _PrayerPageState extends State<PrayerPage> {
             ),
           ),
         ),
+
         trailing: Switch(
           value: notificationsEnabled,
           activeColor: const Color(0xFF17604B),
@@ -682,6 +703,7 @@ class _PrayerPageState extends State<PrayerPage> {
           horizontal: 18,
           vertical: 8,
         ),
+
         leading: Container(
           width: 52,
           height: 52,
@@ -695,6 +717,7 @@ class _PrayerPageState extends State<PrayerPage> {
             size: 27,
           ),
         ),
+
         title: Text(
           title,
           style: const TextStyle(
@@ -703,6 +726,7 @@ class _PrayerPageState extends State<PrayerPage> {
             color: Color(0xFF173D32),
           ),
         ),
+
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 5),
           child: Text(
@@ -712,11 +736,13 @@ class _PrayerPageState extends State<PrayerPage> {
             ),
           ),
         ),
+
         trailing: const Icon(
           Icons.arrow_forward_ios_rounded,
           size: 17,
           color: Colors.black45,
         ),
+
         onTap: () {
           _showMessage(subtitle);
         },
