@@ -31,11 +31,11 @@ class _HomePageState extends State<HomePage> {
           'home': 'Home',
           'quran': "Qur'an",
           'dhikr': 'Adhkar',
+          'tasbeeh': 'Tasbeeh',
           'hadith': 'Hadith',
+          'prayer': 'Prayer',
           'profile': 'Profile',
           'recitations': 'Recitation Majlis',
-          'tasbeeh': 'Tasbeeh',
-          'prayer': 'Prayer',
         };
 
       case 'fr':
@@ -44,11 +44,11 @@ class _HomePageState extends State<HomePage> {
           'home': 'Accueil',
           'quran': 'Coran',
           'dhikr': 'Adhkar',
+          'tasbeeh': 'Tasbih',
           'hadith': 'Hadith',
+          'prayer': 'Prière',
           'profile': 'Profil',
           'recitations': 'Majlis de récitation',
-          'tasbeeh': 'Tasbih',
-          'prayer': 'Prière',
         };
 
       case 'tr':
@@ -57,11 +57,11 @@ class _HomePageState extends State<HomePage> {
           'home': 'Ana Sayfa',
           'quran': 'Kur’an',
           'dhikr': 'Zikir',
+          'tasbeeh': 'Tesbih',
           'hadith': 'Hadis',
+          'prayer': 'Namaz',
           'profile': 'Profil',
           'recitations': 'Tilavet Meclisi',
-          'tasbeeh': 'Tesbih',
-          'prayer': 'Namaz',
         };
 
       case 'ur':
@@ -70,11 +70,11 @@ class _HomePageState extends State<HomePage> {
           'home': 'ہوم',
           'quran': 'قرآن',
           'dhikr': 'اذکار',
+          'tasbeeh': 'تسبیح',
           'hadith': 'حدیث',
+          'prayer': 'نماز',
           'profile': 'پروفائل',
           'recitations': 'تلاوت کی مجلس',
-          'tasbeeh': 'تسبیح',
-          'prayer': 'نماز',
         };
 
       case 'id':
@@ -83,11 +83,11 @@ class _HomePageState extends State<HomePage> {
           'home': 'Beranda',
           'quran': 'Al-Qur’an',
           'dhikr': 'Dzikir',
+          'tasbeeh': 'Tasbih',
           'hadith': 'Hadis',
+          'prayer': 'Salat',
           'profile': 'Profil',
           'recitations': 'Majelis Tilawah',
-          'tasbeeh': 'Tasbih',
-          'prayer': 'Shalat',
         };
 
       case 'ms':
@@ -96,11 +96,11 @@ class _HomePageState extends State<HomePage> {
           'home': 'Utama',
           'quran': 'Al-Quran',
           'dhikr': 'Zikir',
+          'tasbeeh': 'Tasbih',
           'hadith': 'Hadis',
+          'prayer': 'Solat',
           'profile': 'Profil',
           'recitations': 'Majlis Tilawah',
-          'tasbeeh': 'Tasbih',
-          'prayer': 'Solat',
         };
 
       default:
@@ -109,11 +109,11 @@ class _HomePageState extends State<HomePage> {
           'home': 'الرئيسية',
           'quran': 'القرآن',
           'dhikr': 'الأذكار',
+          'tasbeeh': 'المسبحة',
           'hadith': 'الحديث',
+          'prayer': 'الصلاة',
           'profile': 'الملف الشخصي',
           'recitations': 'مجلس التلاوة',
-          'tasbeeh': 'المسبحة',
-          'prayer': 'الصلاة',
         };
     }
   }
@@ -134,7 +134,9 @@ class _HomePageState extends State<HomePage> {
           title: Text(t['title']!),
           centerTitle: true,
         ),
+
         body: _buildBody(),
+
         bottomNavigationBar: SafeArea(
           child: Container(
             height: 78,
@@ -188,7 +190,7 @@ class _HomePageState extends State<HomePage> {
                   ),
 
                   _bottomItem(
-                    Icons.mosque_rounded,
+                    Icons.access_time_rounded,
                     t['prayer']!,
                     5,
                   ),
@@ -267,7 +269,9 @@ class _HomePageState extends State<HomePage> {
             size: 80,
             color: Color(0xFF17604B),
           ),
+
           const SizedBox(height: 20),
+
           Text(
             t['title']!,
             style: const TextStyle(
@@ -275,7 +279,9 @@ class _HomePageState extends State<HomePage> {
               fontWeight: FontWeight.bold,
             ),
           ),
+
           const SizedBox(height: 10),
+
           Text(
             t['home']!,
             style: const TextStyle(
@@ -320,7 +326,9 @@ class _HomePageState extends State<HomePage> {
                       .colorScheme
                       .onSurfaceVariant,
             ),
+
             const SizedBox(height: 4),
+
             Text(
               label,
               maxLines: 1,
