@@ -26,6 +26,8 @@ flutter:
     - assets/quran-uthmani.txt
     - assets/app_icon.png
     - assets/hisn_almuslim.json
+    - assets/sahih_al_bukhari_ahadith.utf8.csv
+    - assets/sahih_muslim_ahadith.utf8.txt
 
 flutter_launcher_icons:
   android: true
