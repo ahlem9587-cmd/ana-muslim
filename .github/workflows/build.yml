@@ -36,8 +36,9 @@ jobs:
 
           if "android.permission.POST_NOTIFICATIONS" not in text:
               text = text.replace(
-                  "<manifest xmlns:android=",
-                  permissions + "\n    <manifest xmlns:android="
+                  "<application",
+                  permissions + "\n    <application",
+                  1
               )
 
           path.write_text(text)
