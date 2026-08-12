@@ -57,7 +57,8 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   bool get isRtl =>
-      widget.language == 'ar' || widget.language == 'ur';
+      widget.language == 'ar' ||
+      widget.language == 'ur';
 
   Map<String, String> get texts {
     switch (widget.language) {
@@ -89,6 +90,12 @@ class _PrayerPageState extends State<PrayerPage> {
           'asr': 'Asr',
           'maghrib': 'Maghrib',
           'isha': 'Isha',
+          'notificationPermission':
+              'Please allow notification permission',
+          'alarmPermission':
+              'Please allow exact alarm permission',
+          'notificationScheduled':
+              'Prayer notifications scheduled',
         };
 
       case 'fr':
@@ -121,6 +128,12 @@ class _PrayerPageState extends State<PrayerPage> {
           'asr': 'Asr',
           'maghrib': 'Maghrib',
           'isha': 'Isha',
+          'notificationPermission':
+              'Veuillez autoriser les notifications',
+          'alarmPermission':
+              'Veuillez autoriser les alarmes exactes',
+          'notificationScheduled':
+              'Notifications de prière programmées',
         };
 
       case 'tr':
@@ -150,6 +163,12 @@ class _PrayerPageState extends State<PrayerPage> {
           'asr': 'İkindi',
           'maghrib': 'Akşam',
           'isha': 'Yatsı',
+          'notificationPermission':
+              'Lütfen bildirim iznini verin',
+          'alarmPermission':
+              'Lütfen kesin alarm iznini verin',
+          'notificationScheduled':
+              'Namaz bildirimleri planlandı',
         };
 
       case 'ur':
@@ -179,6 +198,12 @@ class _PrayerPageState extends State<PrayerPage> {
           'asr': 'عصر',
           'maghrib': 'مغرب',
           'isha': 'عشاء',
+          'notificationPermission':
+              'براہ کرم اطلاعات کی اجازت دیں',
+          'alarmPermission':
+              'براہ کرم درست الارم کی اجازت دیں',
+          'notificationScheduled':
+              'نماز کی اطلاعات مقرر کر دی گئی ہیں',
         };
 
       default:
@@ -208,9 +233,19 @@ class _PrayerPageState extends State<PrayerPage> {
           'asr': 'العصر',
           'maghrib': 'المغرب',
           'isha': 'العشاء',
+          'notificationPermission':
+              'الرجاء السماح بإشعارات التطبيق',
+          'alarmPermission':
+              'الرجاء السماح بالتنبيهات الدقيقة',
+          'notificationScheduled':
+              'تم جدولة إشعارات أوقات الصلاة',
         };
     }
   }
+
+  // ============================================================
+  // بداية الصفحة
+  // ============================================================
 
   Future<void> _startPrayerPage() async {
     try {
@@ -234,12 +269,35 @@ class _PrayerPageState extends State<PrayerPage> {
         locationDisabled = false;
       }
 
+      final SharedPreferences prefs =
+          await SharedPreferences.getInstance();
+
+      final bool savedNotificationState =
+          prefs.getBool(
+                'prayer_notifications_enabled',
+              ) ??
+              false;
+
+      if (savedNotificationState &&
+          prayerTimes != null) {
+        final bool scheduled =
+            await _schedulePrayerNotifications(
+          showMessage: false,
+        );
+
+        notificationsEnabled = scheduled;
+      }
+
       if (mounted) {
         setState(() {
           loading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint(
+        'Prayer page error: $e',
+      );
+
       if (mounted) {
         setState(() {
           loading = false;
@@ -249,6 +307,10 @@ class _PrayerPageState extends State<PrayerPage> {
       }
     }
   }
+
+  // ============================================================
+  // تهيئة الإشعارات
+  // ============================================================
 
   Future<void> _initializeNotifications() async {
     tz.initializeTimeZones();
@@ -275,28 +337,41 @@ class _PrayerPageState extends State<PrayerPage> {
       );
     }
 
-    const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const AndroidInitializationSettings
+        androidSettings =
+        AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
 
     const InitializationSettings settings =
         InitializationSettings(
       android: androidSettings,
     );
 
-    await notifications.initialize(settings);
+    await notifications.initialize(
+      settings,
+    );
 
     final AndroidFlutterLocalNotificationsPlugin?
         androidPlugin =
-        notifications.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+        notifications
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
 
     final bool? permission =
-        await androidPlugin?.requestNotificationsPermission();
+        await androidPlugin
+            ?.requestNotificationsPermission();
 
-    notificationsEnabled = permission ?? true;
+    notificationsEnabled =
+        permission ?? false;
 
-    await androidPlugin?.requestExactAlarmsPermission();
+    await androidPlugin
+        ?.requestExactAlarmsPermission();
   }
+
+  // ============================================================
+  // الموقع
+  // ============================================================
 
   Future<bool> _tryGetCurrentLocation() async {
     final bool serviceEnabled =
@@ -309,22 +384,33 @@ class _PrayerPageState extends State<PrayerPage> {
     LocationPermission permission =
         await Geolocator.checkPermission();
 
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
+    if (permission ==
+        LocationPermission.denied) {
+      permission =
+          await Geolocator.requestPermission();
     }
 
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
+    if (permission ==
+            LocationPermission.denied ||
+        permission ==
+            LocationPermission.deniedForever) {
       return false;
     }
 
     try {
-      position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
+      position =
+          await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(
+          accuracy:
+              LocationAccuracy.medium,
         ),
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint(
+        'Location error: $e',
+      );
+
       return false;
     }
 
@@ -346,12 +432,17 @@ class _PrayerPageState extends State<PrayerPage> {
         await SharedPreferences.getInstance();
 
     final double? latitude =
-        prefs.getDouble('saved_latitude');
+        prefs.getDouble(
+      'saved_latitude',
+    );
 
     final double? longitude =
-        prefs.getDouble('saved_longitude');
+        prefs.getDouble(
+      'saved_longitude',
+    );
 
-    if (latitude == null || longitude == null) {
+    if (latitude == null ||
+        longitude == null) {
       return false;
     }
 
@@ -381,24 +472,38 @@ class _PrayerPageState extends State<PrayerPage> {
     );
   }
 
+  // ============================================================
+  // حساب مواقيت الصلاة
+  // ============================================================
+
   void _calculatePrayerTimes(
     double latitude,
     double longitude,
   ) {
     final Coordinates coordinates =
-        Coordinates(latitude, longitude);
+        Coordinates(
+      latitude,
+      longitude,
+    );
 
     final CalculationParameters params =
-        CalculationMethod.muslim_world_league
+        CalculationMethod
+            .muslim_world_league
             .getParameters();
 
-    params.madhab = Madhab.shafi;
+    params.madhab =
+        Madhab.shafi;
 
-    prayerTimes = PrayerTimes.today(
+    prayerTimes =
+        PrayerTimes.today(
       coordinates,
       params,
     );
   }
+
+  // ============================================================
+  // تحديث الموقع
+  // ============================================================
 
   Future<void> _refreshPrayerTimes() async {
     if (mounted) {
@@ -418,7 +523,24 @@ class _PrayerPageState extends State<PrayerPage> {
       });
 
       if (success) {
-        _showMessage(texts['updated']!);
+        final SharedPreferences prefs =
+            await SharedPreferences.getInstance();
+
+        final bool enabled =
+            prefs.getBool(
+                  'prayer_notifications_enabled',
+                ) ??
+                false;
+
+        if (enabled) {
+          await _schedulePrayerNotifications(
+            showMessage: false,
+          );
+        }
+
+        _showMessage(
+          texts['updated']!,
+        );
       } else {
         final bool saved =
             await _loadSavedLocation();
@@ -439,7 +561,7 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   // ============================================================
-  // تشغيل الأذان للاختبار
+  // اختبار صوت الأذان
   // ============================================================
 
   Future<void> _testAdhan() async {
@@ -474,6 +596,10 @@ class _PrayerPageState extends State<PrayerPage> {
         });
       }
     } catch (e) {
+      debugPrint(
+        'Adhan audio error: $e',
+      );
+
       if (mounted) {
         setState(() {
           isPlayingAdhan = false;
@@ -483,68 +609,167 @@ class _PrayerPageState extends State<PrayerPage> {
           'تعذر تشغيل صوت الأذان',
         );
       }
-
-      debugPrint(
-        'Adhan audio error: $e',
-      );
     }
   }
 
-  Future<void> _schedulePrayerNotifications() async {
+  // ============================================================
+  // جدولة إشعارات 30 يومًا
+  // ============================================================
+
+  Future<bool> _schedulePrayerNotifications({
+    bool showMessage = true,
+  }) async {
     if (prayerTimes == null) {
-      return;
+      return false;
+    }
+
+    final AndroidFlutterLocalNotificationsPlugin?
+        androidPlugin =
+        notifications
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+
+    final bool? notificationPermission =
+        await androidPlugin
+            ?.requestNotificationsPermission();
+
+    if (notificationPermission == false) {
+      if (mounted) {
+        _showMessage(
+          texts['notificationPermission']!,
+        );
+      }
+
+      return false;
+    }
+
+    final bool? exactAlarmPermission =
+        await androidPlugin
+            ?.requestExactAlarmsPermission();
+
+    if (exactAlarmPermission == false) {
+      if (mounted) {
+        _showMessage(
+          texts['alarmPermission']!,
+        );
+      }
+
+      return false;
     }
 
     await notifications.cancelAll();
 
-    final List<_PrayerNotificationData> prayers = [
-      _PrayerNotificationData(
-        id: 1,
-        name: texts['fajr']!,
-        time: prayerTimes!.fajr,
-      ),
-      _PrayerNotificationData(
-        id: 2,
-        name: texts['dhuhr']!,
-        time: prayerTimes!.dhuhr,
-      ),
-      _PrayerNotificationData(
-        id: 3,
-        name: texts['asr']!,
-        time: prayerTimes!.asr,
-      ),
-      _PrayerNotificationData(
-        id: 4,
-        name: texts['maghrib']!,
-        time: prayerTimes!.maghrib,
-      ),
-      _PrayerNotificationData(
-        id: 5,
-        name: texts['isha']!,
-        time: prayerTimes!.isha,
-      ),
-    ];
+    final Coordinates coordinates =
+        Coordinates(
+      position?.latitude ??
+          prayerTimes!.coordinates.latitude,
+      position?.longitude ??
+          prayerTimes!.coordinates.longitude,
+    );
 
-    for (final _PrayerNotificationData prayer in prayers) {
-      await _scheduleOnePrayer(prayer);
+    final CalculationParameters params =
+        CalculationMethod
+            .muslim_world_league
+            .getParameters();
+
+    params.madhab =
+        Madhab.shafi;
+
+    final DateTime now =
+        DateTime.now();
+
+    int notificationId = 100;
+
+    for (int day = 0; day < 30; day++) {
+      final DateTime date =
+          DateTime(
+        now.year,
+        now.month,
+        now.day + day,
+      );
+
+      final PrayerTimes dayPrayerTimes =
+          PrayerTimes(
+        coordinates,
+        DateComponents(
+          date.year,
+          date.month,
+          date.day,
+        ),
+        params,
+      );
+
+      final List<_PrayerNotificationData>
+          prayers = [
+        _PrayerNotificationData(
+          id: notificationId++,
+          name: texts['fajr']!,
+          time: dayPrayerTimes.fajr,
+        ),
+        _PrayerNotificationData(
+          id: notificationId++,
+          name: texts['dhuhr']!,
+          time: dayPrayerTimes.dhuhr,
+        ),
+        _PrayerNotificationData(
+          id: notificationId++,
+          name: texts['asr']!,
+          time: dayPrayerTimes.asr,
+        ),
+        _PrayerNotificationData(
+          id: notificationId++,
+          name: texts['maghrib']!,
+          time: dayPrayerTimes.maghrib,
+        ),
+        _PrayerNotificationData(
+          id: notificationId++,
+          name: texts['isha']!,
+          time: dayPrayerTimes.isha,
+        ),
+      ];
+
+      for (final prayer in prayers) {
+        await _scheduleOnePrayer(
+          prayer,
+        );
+      }
     }
+
+    final SharedPreferences prefs =
+        await SharedPreferences.getInstance();
+
+    await prefs.setBool(
+      'prayer_notifications_enabled',
+      true,
+    );
 
     notificationsEnabled = true;
 
     if (mounted) {
       setState(() {});
-      _showMessage(
-        texts['enabled']!,
-      );
+
+      if (showMessage) {
+        _showMessage(
+          texts['notificationScheduled']!,
+        );
+      }
     }
+
+    return true;
   }
+
+  // ============================================================
+  // جدولة إشعار صلاة واحد
+  // ============================================================
 
   Future<void> _scheduleOnePrayer(
     _PrayerNotificationData prayer,
   ) async {
-    final DateTime date = prayer.time;
+    final DateTime date =
+        prayer.time;
 
-    tz.TZDateTime scheduledDate = tz.TZDateTime(
+    final tz.TZDateTime scheduledDate =
+        tz.TZDateTime(
       tz.local,
       date.year,
       date.month,
@@ -553,15 +778,17 @@ class _PrayerPageState extends State<PrayerPage> {
       date.minute,
     );
 
-    if (scheduledDate.isBefore(
-      tz.TZDateTime.now(tz.local),
-    )) {
-      scheduledDate = scheduledDate.add(
-        const Duration(days: 1),
-      );
+    final tz.TZDateTime now =
+        tz.TZDateTime.now(
+      tz.local,
+    );
+
+    if (scheduledDate.isBefore(now)) {
+      return;
     }
 
-    const AndroidNotificationDetails androidDetails =
+    const AndroidNotificationDetails
+        androidDetails =
         AndroidNotificationDetails(
       'prayer_times',
       'Prayer Times',
@@ -571,6 +798,18 @@ class _PrayerPageState extends State<PrayerPage> {
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
+
+      // ======================================================
+      // صوت الأذان
+      //
+      // الملف يجب أن يكون:
+      // android/app/src/main/res/raw/beautiful_adhan.ogg
+      // ======================================================
+
+      sound:
+          RawResourceAndroidNotificationSound(
+        'beautiful_adhan',
+      ),
     );
 
     const NotificationDetails details =
@@ -579,54 +818,90 @@ class _PrayerPageState extends State<PrayerPage> {
     );
 
     await notifications.zonedSchedule(
-      prayer.id,
-      prayer.name,
-      prayer.name,
-      scheduledDate,
-      details,
+      id: prayer.id,
+      title: prayer.name,
+      body: prayer.name,
+      scheduledDate: scheduledDate,
+      notificationDetails: details,
       androidScheduleMode:
-          AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents:
-          DateTimeComponents.time,
+          AndroidScheduleMode
+              .exactAllowWhileIdle,
     );
   }
 
+  // ============================================================
+  // إيقاف الإشعارات
+  // ============================================================
+
   Future<void> _disablePrayerNotifications() async {
     await notifications.cancelAll();
+
+    final SharedPreferences prefs =
+        await SharedPreferences.getInstance();
+
+    await prefs.setBool(
+      'prayer_notifications_enabled',
+      false,
+    );
 
     notificationsEnabled = false;
 
     if (mounted) {
       setState(() {});
+
       _showMessage(
         texts['disabled']!,
       );
     }
   }
 
-  void _showMessage(String message) {
+  // ============================================================
+  // رسالة
+  // ============================================================
+
+  void _showMessage(
+    String message,
+  ) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
       SnackBar(
         content: Text(message),
       ),
     );
   }
 
-  String _formatTime(DateTime time) {
+  // ============================================================
+  // تنسيق الوقت
+  // ============================================================
+
+  String _formatTime(
+    DateTime time,
+  ) {
     final String hour =
-        time.hour.toString().padLeft(2, '0');
+        time.hour
+            .toString()
+            .padLeft(2, '0');
 
     final String minute =
-        time.minute.toString().padLeft(2, '0');
+        time.minute
+            .toString()
+            .padLeft(2, '0');
 
     return '$hour:$minute';
   }
 
+  // ============================================================
+  // الواجهة
+  // ============================================================
+
   @override
-  Widget build(BuildContext context) {
-    final Map<String, String> t = texts;
+  Widget build(
+    BuildContext context,
+  ) {
+    final Map<String, String> t =
+        texts;
 
     return Directionality(
       textDirection:
@@ -639,8 +914,10 @@ class _PrayerPageState extends State<PrayerPage> {
         appBar: AppBar(
           title: Text(
             t['title']!,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
+            style:
+                const TextStyle(
+              fontWeight:
+                  FontWeight.bold,
             ),
           ),
           centerTitle: true,
@@ -655,12 +932,16 @@ class _PrayerPageState extends State<PrayerPage> {
                       MainAxisAlignment.center,
                   children: [
                     const CircularProgressIndicator(
-                      color: Color(0xFF17604B),
+                      color:
+                          Color(0xFF17604B),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(
+                      height: 16,
+                    ),
                     Text(
                       t['getting']!,
-                      style: const TextStyle(
+                      style:
+                          const TextStyle(
                         fontSize: 16,
                       ),
                     ),
@@ -674,56 +955,72 @@ class _PrayerPageState extends State<PrayerPage> {
                     _refreshPrayerTimes,
                 child: ListView(
                   padding:
-                      const EdgeInsets.all(16),
+                      const EdgeInsets.all(
+                    16,
+                  ),
                   children: [
                     if (usingSavedLocation)
                       _buildSavedLocationMessage(),
 
                     _buildPrayerTimesCard(),
 
-                    const SizedBox(height: 14),
-
-                    // ==================================================
-                    // زر اختبار الأذان
-                    // ==================================================
+                    const SizedBox(
+                      height: 14,
+                    ),
 
                     _buildAdhanTestCard(),
 
-                    const SizedBox(height: 14),
-
-                    _sectionCard(
-                      Icons.water_drop_rounded,
-                      t['wudu']!,
-                      t['soon']!,
-                      const Color(0xFF287A9E),
+                    const SizedBox(
+                      height: 14,
                     ),
 
                     _sectionCard(
-                      Icons.mosque_rounded,
+                      Icons
+                          .water_drop_rounded,
+                      t['wudu']!,
+                      t['soon']!,
+                      const Color(
+                        0xFF287A9E,
+                      ),
+                    ),
+
+                    _sectionCard(
+                      Icons
+                          .mosque_rounded,
                       t['fard']!,
                       t['soon']!,
-                      const Color(0xFF17604B),
+                      const Color(
+                        0xFF17604B,
+                      ),
                     ),
 
                     _sectionCard(
                       Icons.star_rounded,
                       t['sunnah']!,
                       t['soon']!,
-                      const Color(0xFFE6AA28),
+                      const Color(
+                        0xFFE6AA28,
+                      ),
                     ),
 
                     _sectionCard(
-                      Icons.menu_book_rounded,
+                      Icons
+                          .menu_book_rounded,
                       t['how']!,
                       t['soon']!,
-                      const Color(0xFF17604B),
+                      const Color(
+                        0xFF17604B,
+                      ),
                     ),
 
                     _sectionCard(
-                      Icons.info_outline_rounded,
+                      Icons
+                          .info_outline_rounded,
                       t['rules']!,
                       t['soon']!,
-                      const Color(0xFF17604B),
+                      const Color(
+                        0xFF17604B,
+                      ),
                     ),
 
                     _buildNotificationCard(),
@@ -739,14 +1036,14 @@ class _PrayerPageState extends State<PrayerPage> {
   // ============================================================
 
   Widget _buildAdhanTestCard() {
-    final Map<String, String> t = texts;
+    final Map<String, String> t =
+        texts;
 
     return Container(
-      margin:
-          const EdgeInsets.only(bottom: 0),
       padding:
           const EdgeInsets.all(18),
-      decoration: BoxDecoration(
+      decoration:
+          BoxDecoration(
         color:
             const Color(0xFFFFFAF2),
         borderRadius:
@@ -765,20 +1062,24 @@ class _PrayerPageState extends State<PrayerPage> {
             decoration:
                 BoxDecoration(
               color:
-                  const Color(0xFF17604B)
-                      .withOpacity(0.10),
+                  const Color(
+                0xFF17604B,
+              ).withOpacity(0.10),
               shape:
                   BoxShape.circle,
             ),
             child: const Icon(
-              Icons.volume_up_rounded,
+              Icons
+                  .volume_up_rounded,
               color:
                   Color(0xFF17604B),
               size: 27,
             ),
           ),
 
-          const SizedBox(width: 14),
+          const SizedBox(
+            width: 14,
+          ),
 
           Expanded(
             child: Text(
@@ -797,11 +1098,14 @@ class _PrayerPageState extends State<PrayerPage> {
           ),
 
           ElevatedButton(
-            onPressed: _testAdhan,
+            onPressed:
+                _testAdhan,
             style:
                 ElevatedButton.styleFrom(
               backgroundColor:
-                  const Color(0xFF17604B),
+                  const Color(
+                0xFF17604B,
+              ),
               foregroundColor:
                   Colors.white,
               shape:
@@ -820,7 +1124,8 @@ class _PrayerPageState extends State<PrayerPage> {
             child: Icon(
               isPlayingAdhan
                   ? Icons.stop_rounded
-                  : Icons.play_arrow_rounded,
+                  : Icons
+                      .play_arrow_rounded,
             ),
           ),
         ],
@@ -828,13 +1133,20 @@ class _PrayerPageState extends State<PrayerPage> {
     );
   }
 
+  // ============================================================
+  // الموقع المحفوظ
+  // ============================================================
+
   Widget _buildSavedLocationMessage() {
     return Container(
       margin:
-          const EdgeInsets.only(bottom: 14),
+          const EdgeInsets.only(
+        bottom: 14,
+      ),
       padding:
           const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      decoration:
+          BoxDecoration(
         color:
             const Color(0xFFFFFAF2),
         borderRadius:
@@ -848,14 +1160,18 @@ class _PrayerPageState extends State<PrayerPage> {
       child: Row(
         children: [
           const Icon(
-            Icons.location_on_rounded,
+            Icons
+                .location_on_rounded,
             color:
                 Color(0xFF17604B),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(
+            width: 10,
+          ),
           Expanded(
             child: Text(
-              texts['savedLocation']!,
+              texts[
+                  'savedLocation']!,
               style:
                   const TextStyle(
                 color:
@@ -870,14 +1186,20 @@ class _PrayerPageState extends State<PrayerPage> {
     );
   }
 
+  // ============================================================
+  // بطاقة مواقيت الصلاة
+  // ============================================================
+
   Widget _buildPrayerTimesCard() {
-    final Map<String, String> t = texts;
+    final Map<String, String> t =
+        texts;
 
     if (prayerTimes == null) {
       return Container(
         padding:
             const EdgeInsets.all(20),
-        decoration: BoxDecoration(
+        decoration:
+            BoxDecoration(
           color:
               const Color(0xFFFFFAF2),
           borderRadius:
@@ -891,12 +1213,15 @@ class _PrayerPageState extends State<PrayerPage> {
         child: Column(
           children: [
             const Icon(
-              Icons.location_off_rounded,
+              Icons
+                  .location_off_rounded,
               size: 42,
               color:
                   Color(0xFF17604B),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(
+              height: 12,
+            ),
             Text(
               t['locationError']!,
               textAlign:
@@ -910,20 +1235,27 @@ class _PrayerPageState extends State<PrayerPage> {
                     Color(0xFF173D32),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(
+              height: 16,
+            ),
             ElevatedButton.icon(
               onPressed:
                   _refreshPrayerTimes,
-              icon: const Icon(
-                Icons.location_on_rounded,
+              icon:
+                  const Icon(
+                Icons
+                    .location_on_rounded,
               ),
-              label: Text(
+              label:
+                  Text(
                 t['refresh']!,
               ),
               style:
                   ElevatedButton.styleFrom(
                 backgroundColor:
-                    const Color(0xFF17604B),
+                    const Color(
+                  0xFF17604B,
+                ),
                 foregroundColor:
                     Colors.white,
               ),
@@ -936,7 +1268,8 @@ class _PrayerPageState extends State<PrayerPage> {
     return Container(
       padding:
           const EdgeInsets.all(18),
-      decoration: BoxDecoration(
+      decoration:
+          BoxDecoration(
         color:
             const Color(0xFF17604B),
         borderRadius:
@@ -954,7 +1287,9 @@ class _PrayerPageState extends State<PrayerPage> {
                   FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(
+            height: 16,
+          ),
           _prayerTimeRow(
             t['fajr']!,
             prayerTimes!.fajr,
@@ -1018,13 +1353,21 @@ class _PrayerPageState extends State<PrayerPage> {
     );
   }
 
+  // ============================================================
+  // بطاقة الإشعارات
+  // ============================================================
+
   Widget _buildNotificationCard() {
-    final Map<String, String> t = texts;
+    final Map<String, String> t =
+        texts;
 
     return Container(
       margin:
-          const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
+          const EdgeInsets.only(
+        bottom: 14,
+      ),
+      decoration:
+          BoxDecoration(
         color:
             const Color(0xFFFFFAF2),
         borderRadius:
@@ -1047,13 +1390,15 @@ class _PrayerPageState extends State<PrayerPage> {
           decoration:
               BoxDecoration(
             color:
-                const Color(0xFF17604B)
-                    .withOpacity(0.10),
+                const Color(
+              0xFF17604B,
+            ).withOpacity(0.10),
             shape:
                 BoxShape.circle,
           ),
           child: const Icon(
-            Icons.notifications_active_rounded,
+            Icons
+                .notifications_active_rounded,
             color:
                 Color(0xFF17604B),
             size: 27,
@@ -1086,11 +1431,14 @@ class _PrayerPageState extends State<PrayerPage> {
             ),
           ),
         ),
-        trailing: Switch(
+        trailing:
+            Switch(
           value:
               notificationsEnabled,
           activeColor:
-              const Color(0xFF17604B),
+              const Color(
+            0xFF17604B,
+          ),
           onChanged:
               (bool value) async {
             if (value) {
@@ -1104,6 +1452,10 @@ class _PrayerPageState extends State<PrayerPage> {
     );
   }
 
+  // ============================================================
+  // البطاقات الأخرى
+  // ============================================================
+
   Widget _sectionCard(
     IconData icon,
     String title,
@@ -1115,7 +1467,8 @@ class _PrayerPageState extends State<PrayerPage> {
           const EdgeInsets.only(
         bottom: 14,
       ),
-      decoration: BoxDecoration(
+      decoration:
+          BoxDecoration(
         color:
             const Color(0xFFFFFAF2),
         borderRadius:
@@ -1138,7 +1491,8 @@ class _PrayerPageState extends State<PrayerPage> {
           decoration:
               BoxDecoration(
             color:
-                iconColor.withOpacity(0.10),
+                iconColor
+                    .withOpacity(0.10),
             shape:
                 BoxShape.circle,
           ),
@@ -1174,19 +1528,27 @@ class _PrayerPageState extends State<PrayerPage> {
             ),
           ),
         ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios_rounded,
+        trailing:
+            const Icon(
+          Icons
+              .arrow_forward_ios_rounded,
           size: 17,
           color:
               Colors.black45,
         ),
         onTap: () {
-          _showMessage(subtitle);
+          _showMessage(
+            subtitle,
+          );
         },
       ),
     );
   }
 }
+
+// ================================================================
+// بيانات إشعار الصلاة
+// ================================================================
 
 class _PrayerNotificationData {
   final int id;
