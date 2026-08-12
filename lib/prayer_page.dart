@@ -35,6 +35,18 @@ class _PrayerPageState extends State<PrayerPage> {
   Position? position;
   PrayerTimes? prayerTimes;
 
+  // ============================================================
+  // ثوابت الموقع والإشعارات
+  // ============================================================
+
+  static const String savedLatitudeKey = 'saved_latitude';
+  static const String savedLongitudeKey = 'saved_longitude';
+  static const String notificationEnabledKey =
+      'prayer_notifications_enabled';
+
+  // قناة جديدة حتى يستخدم أندرويد صوت الأذان الجديد
+  static const String adhanChannelId = 'prayer_adhan_v2';
+
   @override
   void initState() {
     super.initState();
@@ -59,6 +71,10 @@ class _PrayerPageState extends State<PrayerPage> {
   bool get isRtl =>
       widget.language == 'ar' ||
       widget.language == 'ur';
+
+  // ============================================================
+  // اللغات
+  // ============================================================
 
   Map<String, String> get texts {
     switch (widget.language) {
@@ -251,15 +267,17 @@ class _PrayerPageState extends State<PrayerPage> {
     try {
       await _initializeNotifications();
 
+      // أولاً نحاول الحصول على GPS الحقيقي
       final bool gotCurrentLocation =
           await _tryGetCurrentLocation();
 
+      // إذا لم ينجح GPS نستخدم آخر GPS محفوظ
       if (!gotCurrentLocation) {
         final bool gotSavedLocation =
             await _loadSavedLocation();
 
         if (!gotSavedLocation) {
-          throw Exception('No location available');
+          throw Exception('No saved location available');
         }
 
         usingSavedLocation = true;
@@ -273,11 +291,11 @@ class _PrayerPageState extends State<PrayerPage> {
           await SharedPreferences.getInstance();
 
       final bool savedNotificationState =
-          prefs.getBool(
-                'prayer_notifications_enabled',
-              ) ??
+          prefs.getBool(notificationEnabledKey) ??
               false;
 
+      // إذا كان المستخدم قد فعل الإشعارات سابقاً
+      // نعيد جدولة الـ30 يومًا من نفس GPS المحفوظ
       if (savedNotificationState &&
           prayerTimes != null) {
         final bool scheduled =
@@ -370,7 +388,7 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   // ============================================================
-  // الموقع
+  // الحصول على GPS الحقيقي
   // ============================================================
 
   Future<bool> _tryGetCurrentLocation() async {
@@ -378,6 +396,7 @@ class _PrayerPageState extends State<PrayerPage> {
         await Geolocator.isLocationServiceEnabled();
 
     if (!serviceEnabled) {
+      debugPrint('Location service is disabled');
       return false;
     }
 
@@ -394,18 +413,41 @@ class _PrayerPageState extends State<PrayerPage> {
             LocationPermission.denied ||
         permission ==
             LocationPermission.deniedForever) {
+      debugPrint('Location permission denied');
       return false;
     }
 
     try {
-      position =
+      final Position currentPosition =
           await Geolocator.getCurrentPosition(
         locationSettings:
             const LocationSettings(
           accuracy:
-              LocationAccuracy.medium,
+              LocationAccuracy.high,
         ),
       );
+
+      position = currentPosition;
+
+      // حفظ GPS الحقيقي
+      await _saveLocation(
+        currentPosition.latitude,
+        currentPosition.longitude,
+      );
+
+      // حساب المواقيت من GPS الحقيقي
+      _calculatePrayerTimes(
+        currentPosition.latitude,
+        currentPosition.longitude,
+      );
+
+      debugPrint(
+        'GPS saved: '
+        '${currentPosition.latitude}, '
+        '${currentPosition.longitude}',
+      );
+
+      return true;
     } catch (e) {
       debugPrint(
         'Location error: $e',
@@ -413,46 +455,63 @@ class _PrayerPageState extends State<PrayerPage> {
 
       return false;
     }
-
-    await _saveLocation(
-      position!.latitude,
-      position!.longitude,
-    );
-
-    _calculatePrayerTimes(
-      position!.latitude,
-      position!.longitude,
-    );
-
-    return true;
   }
+
+  // ============================================================
+  // تحميل آخر GPS محفوظ
+  // ============================================================
 
   Future<bool> _loadSavedLocation() async {
     final SharedPreferences prefs =
         await SharedPreferences.getInstance();
 
     final double? latitude =
-        prefs.getDouble(
-      'saved_latitude',
-    );
+        prefs.getDouble(savedLatitudeKey);
 
     final double? longitude =
-        prefs.getDouble(
-      'saved_longitude',
-    );
+        prefs.getDouble(savedLongitudeKey);
 
     if (latitude == null ||
         longitude == null) {
+      debugPrint(
+        'No saved GPS location found',
+      );
+
       return false;
     }
+
+    // مهم:
+    // نضع الموقع المحفوظ داخل position أيضاً
+    // حتى تستخدمه جدولة الإشعارات نفسها.
+    position = Position(
+      latitude: latitude,
+      longitude: longitude,
+      timestamp: DateTime.now(),
+      accuracy: 0,
+      altitude: 0,
+      altitudeAccuracy: 0,
+      heading: 0,
+      headingAccuracy: 0,
+      speed: 0,
+      speedAccuracy: 0,
+    );
 
     _calculatePrayerTimes(
       latitude,
       longitude,
     );
 
+    debugPrint(
+      'Using saved GPS: '
+      '$latitude, $longitude',
+    );
+
     return prayerTimes != null;
   }
+
+  // ============================================================
+  // حفظ GPS
+  // ============================================================
 
   Future<void> _saveLocation(
     double latitude,
@@ -462,12 +521,12 @@ class _PrayerPageState extends State<PrayerPage> {
         await SharedPreferences.getInstance();
 
     await prefs.setDouble(
-      'saved_latitude',
+      savedLatitudeKey,
       latitude,
     );
 
     await prefs.setDouble(
-      'saved_longitude',
+      savedLongitudeKey,
       longitude,
     );
   }
@@ -512,23 +571,57 @@ class _PrayerPageState extends State<PrayerPage> {
       });
     }
 
+    // نحاول دائماً أخذ GPS جديد
     final bool success =
         await _tryGetCurrentLocation();
 
-    if (mounted) {
-      setState(() {
-        loading = false;
-        locationDisabled = !success;
-        usingSavedLocation = false;
-      });
+    if (success) {
+      final SharedPreferences prefs =
+          await SharedPreferences.getInstance();
 
-      if (success) {
+      final bool enabled =
+          prefs.getBool(
+                notificationEnabledKey,
+              ) ??
+              false;
+
+      if (enabled) {
+        await _schedulePrayerNotifications(
+          showMessage: false,
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          loading = false;
+          locationDisabled = false;
+          usingSavedLocation = false;
+        });
+
+        _showMessage(
+          texts['updated']!,
+        );
+      }
+    } else {
+      // إذا فشل GPS نستخدم آخر موقع محفوظ
+      final bool saved =
+          await _loadSavedLocation();
+
+      if (mounted) {
+        setState(() {
+          loading = false;
+          locationDisabled = true;
+          usingSavedLocation = saved;
+        });
+      }
+
+      if (saved) {
         final SharedPreferences prefs =
             await SharedPreferences.getInstance();
 
         final bool enabled =
             prefs.getBool(
-                  'prayer_notifications_enabled',
+                  notificationEnabledKey,
                 ) ??
                 false;
 
@@ -537,31 +630,16 @@ class _PrayerPageState extends State<PrayerPage> {
             showMessage: false,
           );
         }
-
-        _showMessage(
-          texts['updated']!,
-        );
       } else {
-        final bool saved =
-            await _loadSavedLocation();
-
-        if (mounted) {
-          setState(() {
-            usingSavedLocation = saved;
-          });
-
-          if (!saved) {
-            _showMessage(
-              texts['locationError']!,
-            );
-          }
-        }
+        _showMessage(
+          texts['locationError']!,
+        );
       }
     }
   }
 
   // ============================================================
-  // اختبار صوت الأذان
+  // اختبار الأذان
   // ============================================================
 
   Future<void> _testAdhan() async {
@@ -613,13 +691,18 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   // ============================================================
-  // جدولة إشعارات 30 يومًا
+  // جدولة إشعارات 30 يوم
   // ============================================================
 
   Future<bool> _schedulePrayerNotifications({
     bool showMessage = true,
   }) async {
-    if (prayerTimes == null) {
+    if (prayerTimes == null ||
+        position == null) {
+      debugPrint(
+        'Cannot schedule: no GPS location',
+      );
+
       return false;
     }
 
@@ -657,14 +740,29 @@ class _PrayerPageState extends State<PrayerPage> {
       return false;
     }
 
+    // حذف الجدولة القديمة
     await notifications.cancelAll();
+
+    // ==========================================================
+    // هذا هو GPS المستخدم فعلياً
+    // وليس موقعاً عشوائياً.
+    // ==========================================================
+
+    final double latitude =
+        position!.latitude;
+
+    final double longitude =
+        position!.longitude;
 
     final Coordinates coordinates =
         Coordinates(
-      position?.latitude ??
-          prayerTimes!.coordinates.latitude,
-      position?.longitude ??
-          prayerTimes!.coordinates.longitude,
+      latitude,
+      longitude,
+    );
+
+    debugPrint(
+      'Scheduling prayers for GPS: '
+      '$latitude, $longitude',
     );
 
     final CalculationParameters params =
@@ -679,6 +777,10 @@ class _PrayerPageState extends State<PrayerPage> {
         DateTime.now();
 
     int notificationId = 100;
+
+    // ==========================================================
+    // 30 يوم
+    // ==========================================================
 
     for (int day = 0; day < 30; day++) {
       final DateTime date =
@@ -739,7 +841,7 @@ class _PrayerPageState extends State<PrayerPage> {
         await SharedPreferences.getInstance();
 
     await prefs.setBool(
-      'prayer_notifications_enabled',
+      notificationEnabledKey,
       true,
     );
 
@@ -759,7 +861,7 @@ class _PrayerPageState extends State<PrayerPage> {
   }
 
   // ============================================================
-  // جدولة إشعار صلاة واحد
+  // جدولة إشعار صلاة واحد مع صوت الأذان
   // ============================================================
 
   Future<void> _scheduleOnePrayer(
@@ -787,24 +889,27 @@ class _PrayerPageState extends State<PrayerPage> {
       return;
     }
 
+    // ==========================================================
+    // صوت الأذان
+    //
+    // يجب أن يكون الملف:
+    //
+    // android/app/src/main/res/raw/beautiful_adhan.ogg
+    //
+    // بدون حرف كبير وبدون مسافات.
+    // ==========================================================
+
     const AndroidNotificationDetails
         androidDetails =
         AndroidNotificationDetails(
-      'prayer_times',
-      'Prayer Times',
+      adhanChannelId,
+      'Prayer Adhan',
       channelDescription:
-          'Notifications for Islamic prayer times',
+          'Adhan notifications for prayer times',
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
-
-      // ======================================================
-      // صوت الأذان
-      //
-      // الملف يجب أن يكون:
-      // android/app/src/main/res/raw/beautiful_adhan.ogg
-      // ======================================================
 
       sound:
           RawResourceAndroidNotificationSound(
@@ -840,7 +945,7 @@ class _PrayerPageState extends State<PrayerPage> {
         await SharedPreferences.getInstance();
 
     await prefs.setBool(
-      'prayer_notifications_enabled',
+      notificationEnabledKey,
       false,
     );
 
