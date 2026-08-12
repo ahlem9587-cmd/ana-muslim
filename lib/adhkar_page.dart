@@ -23,6 +23,8 @@ class _AdhkarPageState extends State<AdhkarPage> {
 
   bool isLoading = true;
 
+  String searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -35,13 +37,11 @@ class _AdhkarPageState extends State<AdhkarPage> {
 
   Future<void> _loadData() async {
     try {
-      final jsonString =
-          await rootBundle.loadString(
+      final jsonString = await rootBundle.loadString(
         'assets/hisn_almuslim.json',
       );
 
-      final decoded =
-          json.decode(jsonString);
+      final decoded = json.decode(jsonString);
 
       final prefs =
           await SharedPreferences.getInstance();
@@ -57,13 +57,10 @@ class _AdhkarPageState extends State<AdhkarPage> {
       setState(() {
         if (decoded is Map) {
           adhkarData =
-              Map<String, dynamic>.from(
-            decoded,
-          );
+              Map<String, dynamic>.from(decoded);
         }
 
-        favorites =
-            savedFavorites.toSet();
+        favorites = savedFavorites.toSet();
 
         isLoading = false;
       });
@@ -74,8 +71,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
         isLoading = false;
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'تعذر تحميل الأذكار: $e',
@@ -93,8 +89,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
     String id,
   ) async {
     final prefs =
-        await SharedPreferences
-            .getInstance();
+        await SharedPreferences.getInstance();
 
     setState(() {
       if (favorites.contains(id)) {
@@ -124,6 +119,9 @@ class _AdhkarPageState extends State<AdhkarPage> {
           'noFavorites':
               'You have no favorite adhkar yet',
           'back': 'Back',
+          'search': 'Search adhkar...',
+          'noSearch':
+              'No adhkar found',
         };
 
       case 'fr':
@@ -135,6 +133,10 @@ class _AdhkarPageState extends State<AdhkarPage> {
           'noFavorites':
               'Vous n’avez pas encore de favoris',
           'back': 'Retour',
+          'search':
+              'Rechercher un adhkar...',
+          'noSearch':
+              'Aucun adhkar trouvé',
         };
 
       case 'tr':
@@ -146,16 +148,25 @@ class _AdhkarPageState extends State<AdhkarPage> {
           'noFavorites':
               'Henüz favori zikriniz yok',
           'back': 'Geri',
+          'search':
+              'Zikirlerde ara...',
+          'noSearch':
+              'Zikir bulunamadı',
         };
 
       case 'ur':
         return {
           'title': 'اذکار',
           'favorites': 'پسندیدہ',
-          'noData': 'کوئی اذکار موجود نہیں',
+          'noData':
+              'کوئی اذکار موجود نہیں',
           'noFavorites':
               'ابھی کوئی پسندیدہ ذکر نہیں',
           'back': 'واپس',
+          'search':
+              'اذکار تلاش کریں...',
+          'noSearch':
+              'کوئی ذکر نہیں ملا',
         };
 
       case 'id':
@@ -167,6 +178,10 @@ class _AdhkarPageState extends State<AdhkarPage> {
           'noFavorites':
               'Belum ada dzikir favorit',
           'back': 'Kembali',
+          'search':
+              'Cari dzikir...',
+          'noSearch':
+              'Dzikir tidak ditemukan',
         };
 
       case 'ms':
@@ -178,6 +193,10 @@ class _AdhkarPageState extends State<AdhkarPage> {
           'noFavorites':
               'Belum ada zikir kegemaran',
           'back': 'Kembali',
+          'search':
+              'Cari zikir...',
+          'noSearch':
+              'Zikir tidak ditemui',
         };
 
       default:
@@ -188,6 +207,10 @@ class _AdhkarPageState extends State<AdhkarPage> {
           'noFavorites':
               'لا توجد أذكار مفضلة حتى الآن',
           'back': 'رجوع',
+          'search':
+              'ابحث في الأذكار...',
+          'noSearch':
+              'لم يتم العثور على ذكر',
         };
     }
   }
@@ -226,8 +249,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
     if (value is Map) {
       final result = <String>[];
 
-      for (final entry
-          in value.entries) {
+      for (final entry in value.entries) {
         result.addAll(
           _extractTexts(entry.value),
         );
@@ -256,6 +278,55 @@ class _AdhkarPageState extends State<AdhkarPage> {
     }
 
     return [];
+  }
+
+  // =========================
+  // تنظيف البحث
+  // =========================
+
+  String _normalizeSearch(String text) {
+    return text
+        .toLowerCase()
+        .replaceAll(
+          RegExp(r'\s+'),
+          ' ',
+        )
+        .trim();
+  }
+
+  // =========================
+  // هل القسم يطابق البحث؟
+  // =========================
+
+  bool _matchesSearch(
+    String title,
+    dynamic value,
+  ) {
+    final query =
+        _normalizeSearch(searchQuery);
+
+    if (query.isEmpty) {
+      return true;
+    }
+
+    final normalizedTitle =
+        _normalizeSearch(title);
+
+    if (normalizedTitle.contains(query)) {
+      return true;
+    }
+
+    final textsList =
+        _extractTexts(value);
+
+    for (final text in textsList) {
+      if (_normalizeSearch(text)
+          .contains(query)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   // =========================
@@ -298,7 +369,9 @@ class _AdhkarPageState extends State<AdhkarPage> {
         body: isLoading
             ? const Center(
                 child:
-                    CircularProgressIndicator(),
+                    CircularProgressIndicator(
+                  color: Color(0xFF17604B),
+                ),
               )
             : adhkarData.isEmpty
                 ? Center(
@@ -306,172 +379,337 @@ class _AdhkarPageState extends State<AdhkarPage> {
                       t['noData']!,
                     ),
                   )
-                : _buildCategories(),
+                : _buildBody(),
       ),
     );
   }
 
-  Widget _buildCategories() {
+  // =========================
+  // الصفحة + البحث
+  // =========================
+
+  Widget _buildBody() {
+    final t = texts;
+
     final entries =
-        adhkarData.entries.toList();
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: entries.length,
-      itemBuilder: (
-        context,
-        index,
-      ) {
-        final entry =
-            entries[index];
-
-        final title =
-            entry.key.toString();
-
-        final textsList =
-            _extractTexts(
+        adhkarData.entries.where(
+      (entry) {
+        return _matchesSearch(
+          entry.key.toString(),
           entry.value,
         );
-
-        final favoriteId =
-            'category_$index';
-
-        final isFavorite =
-            favorites.contains(
-          favoriteId,
-        );
-
-        return Card(
-          margin:
-              const EdgeInsets.only(
-            bottom: 12,
-          ),
-          elevation: 0,
-          color:
-              const Color(0xFFFFFAF2),
-          shape:
-              RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(
-              22,
-            ),
-          ),
-          child: InkWell(
-            borderRadius:
-                BorderRadius.circular(
-              22,
-            ),
-            onTap: () {
-              _openCategory(
-                title,
-                entry.value,
-              );
-            },
-            child: Padding(
-              padding:
-                  const EdgeInsets.all(
-                18,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration:
-                        const BoxDecoration(
-                      shape:
-                          BoxShape.circle,
-                      color:
-                          Color(0xFFE5F0EB),
-                    ),
-                    child:
-                        const Icon(
-                      Icons
-                          .auto_awesome_rounded,
-                      color:
-                          Color(0xFF17604B),
-                      size: 27,
-                    ),
-                  ),
-
-                  const SizedBox(
-                    width: 14,
-                  ),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
-                      children: [
-                        Text(
-                          title,
-                          maxLines: 2,
-                          overflow:
-                              TextOverflow
-                                  .ellipsis,
-                          style:
-                              const TextStyle(
-                            fontSize: 18,
-                            fontWeight:
-                                FontWeight
-                                    .bold,
-                            color:
-                                Color(
-                              0xFF173D32,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 5,
-                        ),
-                        Text(
-                          '${textsList.length} ${isRtl ? 'ذكر' : 'items'}',
-                          style:
-                              const TextStyle(
-                            fontSize: 13,
-                            color:
-                                Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  IconButton(
-                    onPressed: () {
-                      _toggleFavorite(
-                        favoriteId,
-                      );
-                    },
-                    icon: Icon(
-                      isFavorite
-                          ? Icons
-                              .star_rounded
-                          : Icons
-                              .star_border_rounded,
-                      color: isFavorite
-                          ? const Color(
-                              0xFFE6AA28,
-                            )
-                          : Colors.grey,
-                      size: 30,
-                    ),
-                  ),
-
-                  const Icon(
-                    Icons
-                        .arrow_forward_ios_rounded,
-                    size: 17,
-                    color:
-                        Colors.black45,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
       },
+    ).toList();
+
+    return Column(
+      children: [
+        // =========================
+        // خانة البحث
+        // =========================
+
+        Padding(
+          padding:
+              const EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            8,
+          ),
+          child: TextField(
+            textDirection: isRtl
+                ? TextDirection.rtl
+                : TextDirection.ltr,
+            onChanged: (value) {
+              setState(() {
+                searchQuery = value;
+              });
+            },
+            decoration:
+                InputDecoration(
+              hintText:
+                  t['search'],
+
+              prefixIcon:
+                  const Icon(
+                Icons.search_rounded,
+                color:
+                    Color(0xFF17604B),
+              ),
+
+              suffixIcon:
+                  searchQuery.isNotEmpty
+                      ? IconButton(
+                          onPressed: () {
+                            setState(() {
+                              searchQuery =
+                                  '';
+                            });
+                          },
+                          icon:
+                              const Icon(
+                            Icons
+                                .clear_rounded,
+                          ),
+                        )
+                      : null,
+
+              filled: true,
+
+              fillColor:
+                  const Color(
+                0xFFFFFAF2,
+              ),
+
+              border:
+                  OutlineInputBorder(
+                borderRadius:
+                    BorderRadius.circular(
+                  18,
+                ),
+                borderSide:
+                    BorderSide.none,
+              ),
+
+              contentPadding:
+                  const EdgeInsets
+                      .symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+          ),
+        ),
+
+        // =========================
+        // عدد النتائج
+        // =========================
+
+        Padding(
+          padding:
+              const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 5,
+          ),
+          child: Align(
+            alignment: isRtl
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            child: Text(
+              '${entries.length}',
+              style:
+                  const TextStyle(
+                fontSize: 12,
+                color:
+                    Colors.black45,
+                fontWeight:
+                    FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+
+        // =========================
+        // النتائج
+        // =========================
+
+        Expanded(
+          child: entries.isEmpty
+              ? Center(
+                  child: Text(
+                    t['noSearch']!,
+                    style:
+                        const TextStyle(
+                      fontSize: 16,
+                      color:
+                          Colors.black54,
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  padding:
+                      const EdgeInsets.all(
+                    16,
+                  ),
+                  itemCount:
+                      entries.length,
+                  itemBuilder:
+                      (context, index) {
+                    final entry =
+                        entries[index];
+
+                    return _buildCategoryCard(
+                      entry,
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  // =========================
+  // بطاقة القسم
+  // =========================
+
+  Widget _buildCategoryCard(
+    MapEntry<String, dynamic> entry,
+  ) {
+    final title =
+        entry.key.toString();
+
+    final textsList =
+        _extractTexts(
+      entry.value,
+    );
+
+    final originalIndex =
+        adhkarData.keys
+            .toList()
+            .indexOf(entry.key);
+
+    final favoriteId =
+        'category_$originalIndex';
+
+    final isFavorite =
+        favorites.contains(
+      favoriteId,
+    );
+
+    return Card(
+      margin:
+          const EdgeInsets.only(
+        bottom: 12,
+      ),
+      elevation: 0,
+      color:
+          const Color(0xFFFFFAF2),
+      shape:
+          RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.circular(
+          22,
+        ),
+        side: const BorderSide(
+          color:
+              Color(0xFFE7DDCE),
+        ),
+      ),
+      child: InkWell(
+        borderRadius:
+            BorderRadius.circular(
+          22,
+        ),
+        onTap: () {
+          _openCategory(
+            title,
+            entry.value,
+          );
+        },
+        child: Padding(
+          padding:
+              const EdgeInsets.all(
+            18,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration:
+                    const BoxDecoration(
+                  shape:
+                      BoxShape.circle,
+                  color:
+                      Color(0xFFE5F0EB),
+                ),
+                child:
+                    const Icon(
+                  Icons
+                      .auto_awesome_rounded,
+                  color:
+                      Color(0xFF17604B),
+                  size: 27,
+                ),
+              ),
+
+              const SizedBox(
+                width: 14,
+              ),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow:
+                          TextOverflow
+                              .ellipsis,
+                      style:
+                          const TextStyle(
+                        fontSize: 17,
+                        fontWeight:
+                            FontWeight
+                                .bold,
+                        color:
+                            Color(
+                          0xFF173D32,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 5,
+                    ),
+
+                    Text(
+                      '${textsList.length} ${isRtl ? 'ذكر' : 'items'}',
+                      style:
+                          const TextStyle(
+                        fontSize: 12,
+                        color:
+                            Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              IconButton(
+                onPressed: () {
+                  _toggleFavorite(
+                    favoriteId,
+                  );
+                },
+                icon: Icon(
+                  isFavorite
+                      ? Icons
+                          .star_rounded
+                      : Icons
+                          .star_border_rounded,
+                  color: isFavorite
+                      ? const Color(
+                          0xFFE6AA28,
+                        )
+                      : Colors.grey,
+                  size: 29,
+                ),
+              ),
+
+              const Icon(
+                Icons
+                    .arrow_forward_ios_rounded,
+                size: 15,
+                color:
+                    Colors.black45,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -520,7 +758,8 @@ class _AdhkarPageState extends State<AdhkarPage> {
     for (int i = 0;
         i < entries.length;
         i++) {
-      final id = 'category_$i';
+      final id =
+          'category_$i';
 
       if (favorites.contains(id)) {
         favoriteEntries.add(
@@ -558,8 +797,9 @@ class _AdhkarPageState extends State<AdhkarPage> {
               children: [
                 Padding(
                   padding:
-                      const EdgeInsets
-                          .all(20),
+                      const EdgeInsets.all(
+                    20,
+                  ),
                   child: Row(
                     children: [
                       const Icon(
@@ -583,6 +823,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
                     ],
                   ),
                 ),
+
                 Expanded(
                   child:
                       favoriteEntries
@@ -620,8 +861,7 @@ class _AdhkarPageState extends State<AdhkarPage> {
                                       ListTile(
                                     title:
                                         Text(
-                                      entry
-                                          .key,
+                                      entry.key,
                                       style:
                                           const TextStyle(
                                         fontWeight:
@@ -732,8 +972,9 @@ class _AdhkarDetailsPageState
               )
             : ListView.builder(
                 padding:
-                    const EdgeInsets
-                        .all(16),
+                    const EdgeInsets.all(
+                  16,
+                ),
                 itemCount:
                     widget.adhkar.length,
                 itemBuilder:
@@ -746,9 +987,7 @@ class _AdhkarDetailsPageState
 
                   final isFavorite =
                       localFavorites
-                          .contains(
-                    id,
-                  );
+                          .contains(id);
 
                   return Container(
                     margin:
@@ -802,7 +1041,7 @@ class _AdhkarDetailsPageState
                                 style:
                                     const TextStyle(
                                   fontSize:
-                                      21,
+                                      19,
                                   height:
                                       1.9,
                                   color:
@@ -812,6 +1051,7 @@ class _AdhkarDetailsPageState
                                 ),
                               ),
                             ),
+
                             IconButton(
                               onPressed:
                                   () async {
@@ -820,8 +1060,9 @@ class _AdhkarDetailsPageState
                                   id,
                                 );
 
-                                if (!mounted)
+                                if (!mounted) {
                                   return;
+                                }
 
                                 setState(
                                   () {
@@ -883,8 +1124,7 @@ class _AdhkarDetailsPageState
                               padding:
                                   const EdgeInsets
                                       .only(
-                                bottom:
-                                    6,
+                                bottom: 6,
                               ),
                               child:
                                   Text(
