@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'quran_data.dart';
 
-class QuranPage extends StatelessWidget {
+class QuranPage extends StatefulWidget {
   final String language;
 
   const QuranPage({
@@ -10,8 +12,33 @@ class QuranPage extends StatelessWidget {
     required this.language,
   });
 
+  @override
+  State<QuranPage> createState() => _QuranPageState();
+}
+
+class _QuranPageState extends State<QuranPage> {
+  bool isLoading = true;
+
+  List<List<QuranVerse>> quran = [];
+
+  String search = '';
+
+  Timer? _searchTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuran();
+  }
+
+  @override
+  void dispose() {
+    _searchTimer?.cancel();
+    super.dispose();
+  }
+
   String get title {
-    switch (language) {
+    switch (widget.language) {
       case 'en':
         return 'Holy Quran';
       case 'fr':
@@ -25,14 +52,206 @@ class QuranPage extends StatelessWidget {
     }
   }
 
+  bool get isRtl {
+    return widget.language == 'ar' ||
+        widget.language == 'ur';
+  }
+
+  // ============================================================
+  // تحميل القرآن
+  // ============================================================
+
+  Future<void> _loadQuran() async {
+    try {
+      final String text =
+          await rootBundle.loadString(
+        'assets/quran-uthmani.txt',
+      );
+
+      final List<String> lines =
+          text.split('\n');
+
+      final List<List<QuranVerse>> result =
+          List.generate(
+        114,
+        (_) => <QuranVerse>[],
+      );
+
+      for (final line in lines) {
+        final String cleanLine =
+            line.trim();
+
+        if (cleanLine.isEmpty) {
+          continue;
+        }
+
+        final List<String> parts =
+            cleanLine.split('|');
+
+        if (parts.length < 3) {
+          continue;
+        }
+
+        final int? surahNumber =
+            int.tryParse(
+          parts[0].trim(),
+        );
+
+        final int? verseNumber =
+            int.tryParse(
+          parts[1].trim(),
+        );
+
+        final String verseText =
+            parts
+                .sublist(2)
+                .join('|')
+                .trim();
+
+        if (surahNumber == null ||
+            verseNumber == null ||
+            surahNumber < 1 ||
+            surahNumber > 114 ||
+            verseNumber < 1 ||
+            verseText.isEmpty) {
+          continue;
+        }
+
+        result[surahNumber - 1].add(
+          QuranVerse(
+            number: verseNumber,
+            text: verseText,
+          ),
+        );
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        quran = result;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ أثناء تحميل القرآن:\n$e',
+          ),
+        ),
+      );
+    }
+  }
+
+  // ============================================================
+  // البحث
+  // ============================================================
+
+  void _onSearchChanged(String value) {
+    _searchTimer?.cancel();
+
+    _searchTimer = Timer(
+      const Duration(milliseconds: 180),
+      () {
+        if (!mounted) return;
+
+        setState(() {
+          search = value.trim();
+        });
+      },
+    );
+  }
+
+  String _normalizeArabic(String text) {
+    return text
+        .replaceAll(
+          RegExp(r'[\u064B-\u065F\u0670]'),
+          '',
+        )
+        .replaceAll('أ', 'ا')
+        .replaceAll('إ', 'ا')
+        .replaceAll('آ', 'ا')
+        .replaceAll('ٱ', 'ا')
+        .replaceAll('ى', 'ي')
+        .replaceAll('ة', 'ه')
+        .replaceAll('ـ', '')
+        .toLowerCase()
+        .trim();
+  }
+
+  bool _matchesSearch(
+    QuranSurah surah,
+    List<QuranVerse> verses,
+  ) {
+    if (search.isEmpty) {
+      return true;
+    }
+
+    final String query =
+        _normalizeArabic(search);
+
+    final String surahName =
+        _normalizeArabic(
+      '${surah.nameAr} ${surah.nameEn}',
+    );
+
+    if (surahName.contains(query)) {
+      return true;
+    }
+
+    for (final verse in verses) {
+      if (_normalizeArabic(
+        verse.text,
+      ).contains(query)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // ============================================================
+  // السور المطابقة
+  // ============================================================
+
+  List<int> get filteredSurahIndexes {
+    final List<int> result = [];
+
+    for (int i = 0;
+        i < quranSurahs.length;
+        i++) {
+      final QuranSurah surah =
+          quranSurahs[i];
+
+      final List<QuranVerse> verses =
+          i < quran.length
+              ? quran[i]
+              : <QuranVerse>[];
+
+      if (_matchesSearch(
+        surah,
+        verses,
+      )) {
+        result.add(i);
+      }
+    }
+
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool isRtl =
-        language == 'ar' || language == 'ur';
+    final bool rtl = isRtl;
 
     return Directionality(
       textDirection:
-          isRtl
+          rtl
               ? TextDirection.rtl
               : TextDirection.ltr,
       child: Scaffold(
@@ -43,7 +262,8 @@ class QuranPage extends StatelessWidget {
             title,
             style: const TextStyle(
               fontSize: 20,
-              fontWeight: FontWeight.bold,
+              fontWeight:
+                  FontWeight.bold,
             ),
           ),
           centerTitle: true,
@@ -51,227 +271,300 @@ class QuranPage extends StatelessWidget {
               const Color(0xFFF4EDE1),
           elevation: 0,
         ),
-        body: FutureBuilder<
-            List<List<QuranVerse>>>(
-          future: _loadQuran(),
-          builder: (
-            context,
-            snapshot,
-          ) {
-            if (snapshot.connectionState ==
-                ConnectionState.waiting) {
-              return const Center(
+        body: isLoading
+            ? const Center(
                 child:
                     CircularProgressIndicator(
                   color:
                       Color(0xFF17604B),
                 ),
-              );
-            }
-
-            if (snapshot.hasError) {
-              return Center(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.all(20),
-                  child: Text(
-                    'حدث خطأ أثناء تحميل القرآن:\n${snapshot.error}',
-                    textAlign:
-                        TextAlign.center,
-                  ),
-                ),
-              );
-            }
-
-            final quran =
-                snapshot.data ?? [];
-
-            return ListView.builder(
-              padding:
-                  const EdgeInsets.all(12),
-              itemCount:
-                  quranSurahs.length,
-              itemBuilder:
-                  (context, index) {
-                final surah =
-                    quranSurahs[index];
-
-                final verses =
-                    index < quran.length
-                        ? quran[index]
-                        : <QuranVerse>[];
-
-                return Card(
-                  margin:
-                      const EdgeInsets.only(
-                    bottom: 10,
-                  ),
-                  color:
-                      const Color(0xFFFFFAF2),
-                  elevation: 0,
-                  shape:
-                      RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(
-                      18,
-                    ),
-                    side: const BorderSide(
-                      color:
-                          Color(0xFFE7DDCE),
-                    ),
-                  ),
-                  child: ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-
-                    leading:
-                        CircleAvatar(
-                      backgroundColor:
-                          const Color(
-                        0xFF17604B,
-                      ),
-                      child: Text(
-                        '${surah.number}',
-                        style:
-                            const TextStyle(
-                          color: Colors.white,
-                          fontWeight:
-                              FontWeight.bold,
-                        ),
-                      ),
-                    ),
-
-                    title: Text(
-                      surah.nameAr,
-                      style:
-                          const TextStyle(
-                        fontSize: 19,
-                        fontWeight:
-                            FontWeight.bold,
-                        color:
-                            Color(0xFF173D32),
-                      ),
-                    ),
-
-                    subtitle: Padding(
-                      padding:
-                          const EdgeInsets.only(
-                        top: 3,
-                      ),
-                      child: Text(
-                        surah.nameEn,
-                        style:
-                            const TextStyle(
-                          fontSize: 13,
-                          color:
-                              Colors.black54,
-                        ),
-                      ),
-                    ),
-
-                    trailing: Text(
-                      '${surah.verses} آية',
-                      style:
-                          const TextStyle(
-                        fontSize: 12,
-                        color:
-                            Colors.black54,
-                      ),
-                    ),
-
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) =>
-                                  SurahPage(
-                            surah: surah,
-                            verses: verses,
-                            language:
-                                language,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
-            );
-          },
-        ),
+              )
+            : _buildBody(),
       ),
     );
   }
 
-  Future<List<List<QuranVerse>>>
-      _loadQuran() async {
-    final String text =
-        await rootBundle.loadString(
-      'assets/quran-uthmani.txt',
-    );
+  // ============================================================
+  // الصفحة الرئيسية
+  // ============================================================
 
-    final List<String> lines =
-        text.split('\n');
+  Widget _buildBody() {
+    final List<int> indexes =
+        filteredSurahIndexes;
 
-    final List<List<QuranVerse>> result =
-        List.generate(
-      114,
-      (_) => <QuranVerse>[],
-    );
+    return Column(
+      children: [
+        // ========================================================
+        // خانة البحث
+        // ========================================================
 
-    for (final line in lines) {
-      final String cleanLine =
-          line.trim();
+        Padding(
+          padding:
+              const EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            8,
+          ),
+          child: TextField(
+            onChanged:
+                _onSearchChanged,
+            textDirection:
+                isRtl
+                    ? TextDirection.rtl
+                    : TextDirection.ltr,
+            decoration:
+                InputDecoration(
+              hintText:
+                  widget.language == 'en'
+                      ? 'Search Quran...'
+                      : widget.language == 'fr'
+                          ? 'Rechercher dans le Coran...'
+                          : widget.language == 'tr'
+                              ? 'Kur’an’da ara...'
+                              : widget.language == 'ur'
+                                  ? 'قرآن میں تلاش کریں...'
+                                  : 'ابحث في القرآن...',
 
-      if (cleanLine.isEmpty) {
-        continue;
-      }
+              prefixIcon:
+                  const Icon(
+                Icons.search_rounded,
+                color:
+                    Color(0xFF17604B),
+              ),
 
-      final List<String> parts =
-          cleanLine.split('|');
+              filled: true,
 
-      if (parts.length < 3) {
-        continue;
-      }
+              fillColor:
+                  const Color(0xFFFFFAF2),
 
-      final int? surahNumber =
-          int.tryParse(
-        parts[0].trim(),
-      );
+              border:
+                  OutlineInputBorder(
+                borderRadius:
+                    BorderRadius.circular(
+                  18,
+                ),
+                borderSide:
+                    BorderSide.none,
+              ),
 
-      final int? verseNumber =
-          int.tryParse(
-        parts[1].trim(),
-      );
-
-      final String verseText =
-          parts
-              .sublist(2)
-              .join('|')
-              .trim();
-
-      if (surahNumber == null ||
-          verseNumber == null ||
-          surahNumber < 1 ||
-          surahNumber > 114 ||
-          verseNumber < 1 ||
-          verseText.isEmpty) {
-        continue;
-      }
-
-      result[surahNumber - 1].add(
-        QuranVerse(
-          number: verseNumber,
-          text: verseText,
+              contentPadding:
+                  const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+          ),
         ),
-      );
-    }
 
-    return result;
+        // ========================================================
+        // عدد النتائج
+        // ========================================================
+
+        Padding(
+          padding:
+              const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 6,
+          ),
+          child: Align(
+            alignment:
+                isRtl
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+            child: Text(
+              '${indexes.length} ${widget.language == 'en' ? 'Surahs' : 'سورة'}',
+              style:
+                  const TextStyle(
+                fontSize: 13,
+                fontWeight:
+                    FontWeight.w600,
+                color:
+                    Colors.black54,
+              ),
+            ),
+          ),
+        ),
+
+        // ========================================================
+        // السور
+        // ========================================================
+
+        Expanded(
+          child: indexes.isEmpty
+              ? Center(
+                  child: Text(
+                    widget.language == 'en'
+                        ? 'No results found'
+                        : widget.language == 'fr'
+                            ? 'Aucun résultat'
+                            : widget.language == 'tr'
+                                ? 'Sonuç bulunamadı'
+                                : widget.language == 'ur'
+                                    ? 'کوئی نتیجہ نہیں ملا'
+                                    : 'لم يتم العثور على نتائج',
+                    style:
+                        const TextStyle(
+                      fontSize: 16,
+                      color:
+                          Colors.black54,
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  padding:
+                      const EdgeInsets.all(
+                    12,
+                  ),
+                  itemCount:
+                      indexes.length,
+                  itemBuilder:
+                      (
+                    context,
+                    listIndex,
+                  ) {
+                    final int index =
+                        indexes[listIndex];
+
+                    final QuranSurah surah =
+                        quranSurahs[index];
+
+                    final List<QuranVerse>
+                        verses =
+                        index < quran.length
+                            ? quran[index]
+                            : <QuranVerse>[];
+
+                    return Card(
+                      margin:
+                          const EdgeInsets
+                              .only(
+                        bottom: 10,
+                      ),
+                      color:
+                          const Color(
+                        0xFFFFFAF2,
+                      ),
+                      elevation: 0,
+                      shape:
+                          RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius
+                                .circular(
+                          18,
+                        ),
+                        side:
+                            const BorderSide(
+                          color:
+                              Color(
+                            0xFFE7DDCE,
+                          ),
+                        ),
+                      ),
+                      child: ListTile(
+                        contentPadding:
+                            const EdgeInsets
+                                .symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+
+                        leading:
+                            CircleAvatar(
+                          backgroundColor:
+                              const Color(
+                            0xFF17604B,
+                          ),
+                          child:
+                              Text(
+                            '${surah.number}',
+                            style:
+                                const TextStyle(
+                              color:
+                                  Colors
+                                      .white,
+                              fontWeight:
+                                  FontWeight
+                                      .bold,
+                            ),
+                          ),
+                        ),
+
+                        title:
+                            Text(
+                          surah.nameAr,
+                          style:
+                              const TextStyle(
+                            fontSize: 19,
+                            fontWeight:
+                                FontWeight
+                                    .bold,
+                            color:
+                                Color(
+                              0xFF173D32,
+                            ),
+                          ),
+                        ),
+
+                        subtitle:
+                            Padding(
+                          padding:
+                              const EdgeInsets
+                                  .only(
+                            top: 3,
+                          ),
+                          child:
+                              Text(
+                            surah.nameEn,
+                            style:
+                                const TextStyle(
+                              fontSize: 13,
+                              color:
+                                  Colors
+                                      .black54,
+                            ),
+                          ),
+                        ),
+
+                        trailing:
+                            Text(
+                          '${surah.verses} آية',
+                          style:
+                              const TextStyle(
+                            fontSize: 12,
+                            color:
+                                Colors
+                                    .black54,
+                          ),
+                        ),
+
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (
+                                context,
+                              ) =>
+                                      SurahPage(
+                                surah:
+                                    surah,
+                                verses:
+                                    verses,
+                                language:
+                                    widget
+                                        .language,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
   }
 }
 
@@ -424,10 +717,6 @@ class SurahPage extends StatelessWidget {
 
             // ==================================================
             // البسملة
-            //
-            // تظهر مرة واحدة فقط في بداية السورة.
-            //
-            // التوبة لا تحتوي على بسملة.
             // ==================================================
 
             if (surah.number != 9)
@@ -442,7 +731,7 @@ class SurahPage extends StatelessWidget {
                       TextAlign.center,
                   style:
                       const TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     height: 1.8,
                     fontWeight:
                         FontWeight.w600,
@@ -455,7 +744,8 @@ class SurahPage extends StatelessWidget {
             // ==================================================
             // نص السورة
             //
-            // جميع الآيات متتابعة في نفس النص.
+            // الخط قريب من خط الأحاديث.
+            // جميع الآيات متتابعة.
             // ==================================================
 
             Container(
@@ -501,8 +791,8 @@ class SurahPage extends StatelessWidget {
   // ==============================================================
   // بناء الآيات
   //
-  // الآيات لا تنزل سطرًا جديدًا.
-  // كل آية بعدها رقمها ثم تكمل الآية التالية.
+  // الخط 16 قريب من خط الأحاديث.
+  // الآيات لا تنزل كل آية في سطر.
   // ==============================================================
 
   List<InlineSpan> _buildVerseSpans() {
@@ -516,8 +806,8 @@ class SurahPage extends StatelessWidget {
               '${verse.text} ',
           style:
               const TextStyle(
-            fontSize: 18,
-            height: 1.9,
+            fontSize: 16,
+            height: 1.8,
             color:
                 Color(0xFF172D27),
             fontWeight:
@@ -532,8 +822,8 @@ class SurahPage extends StatelessWidget {
               '﴿${verse.number}﴾ ',
           style:
               const TextStyle(
-            fontSize: 14,
-            height: 1.9,
+            fontSize: 13,
+            height: 1.8,
             fontWeight:
                 FontWeight.bold,
             color:
