@@ -19,6 +19,19 @@ jobs:
       - name: Create Android project
         run: flutter create . --platforms=android
 
+      # ============================================================
+      # نسخ ملف الأذان إلى Android ليُستخدم كصوت للإشعار
+      # ============================================================
+
+      - name: Add Adhan sound to Android
+        run: |
+          mkdir -p android/app/src/main/res/raw
+          cp assets/audio/Beautiful_adhan.ogg android/app/src/main/res/raw/adhan.ogg
+
+      # ============================================================
+      # صلاحيات Android
+      # ============================================================
+
       - name: Add Android permissions
         run: |
           python3 - <<'PY'
@@ -43,6 +56,10 @@ jobs:
 
           path.write_text(text)
           PY
+
+      # ============================================================
+      # Core Library Desugaring
+      # ============================================================
 
       - name: Enable Core Library Desugaring
         run: |
@@ -91,14 +108,30 @@ jobs:
           path.write_text(text)
           PY
 
+      # ============================================================
+      # Flutter dependencies
+      # ============================================================
+
       - name: Get Flutter dependencies
         run: flutter pub get
+
+      # ============================================================
+      # App Icon
+      # ============================================================
 
       - name: Generate App Icon
         run: dart run flutter_launcher_icons
 
+      # ============================================================
+      # Build APK
+      # ============================================================
+
       - name: Build Release APK
         run: flutter build apk --release
+
+      # ============================================================
+      # رفع APK
+      # ============================================================
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
