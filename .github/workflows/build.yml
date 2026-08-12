@@ -26,7 +26,7 @@ jobs:
       - name: Add Adhan sound to Android
         run: |
           mkdir -p android/app/src/main/res/raw
-          cp assets/audio/Beautiful_adhan.ogg android/app/src/main/res/raw/adhan.ogg
+          cp assets/audio/Beautiful_adhan.ogg android/app/src/main/res/raw/beautiful_adhan.ogg
 
       # ============================================================
       # صلاحيات Android
