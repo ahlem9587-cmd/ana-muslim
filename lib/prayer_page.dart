@@ -35,18 +35,6 @@ class _PrayerPageState extends State<PrayerPage> {
   Position? position;
   PrayerTimes? prayerTimes;
 
-  // ============================================================
-  // ثوابت الموقع والإشعارات
-  // ============================================================
-
-  static const String savedLatitudeKey = 'saved_latitude';
-  static const String savedLongitudeKey = 'saved_longitude';
-  static const String notificationEnabledKey =
-      'prayer_notifications_enabled';
-
-  // قناة جديدة حتى يستخدم أندرويد صوت الأذان الجديد
-  static const String adhanChannelId = 'prayer_adhan_v2';
-
   @override
   void initState() {
     super.initState();
@@ -71,10 +59,6 @@ class _PrayerPageState extends State<PrayerPage> {
   bool get isRtl =>
       widget.language == 'ar' ||
       widget.language == 'ur';
-
-  // ============================================================
-  // اللغات
-  // ============================================================
 
   Map<String, String> get texts {
     switch (widget.language) {
@@ -259,25 +243,19 @@ class _PrayerPageState extends State<PrayerPage> {
     }
   }
 
-  // ============================================================
-  // بداية الصفحة
-  // ============================================================
-
   Future<void> _startPrayerPage() async {
     try {
       await _initializeNotifications();
 
-      // أولاً نحاول الحصول على GPS الحقيقي
       final bool gotCurrentLocation =
           await _tryGetCurrentLocation();
 
-      // إذا لم ينجح GPS نستخدم آخر GPS محفوظ
       if (!gotCurrentLocation) {
         final bool gotSavedLocation =
             await _loadSavedLocation();
 
         if (!gotSavedLocation) {
-          throw Exception('No saved location available');
+          throw Exception('No location available');
         }
 
         usingSavedLocation = true;
@@ -291,11 +269,11 @@ class _PrayerPageState extends State<PrayerPage> {
           await SharedPreferences.getInstance();
 
       final bool savedNotificationState =
-          prefs.getBool(notificationEnabledKey) ??
+          prefs.getBool(
+                'prayer_notifications_enabled',
+              ) ??
               false;
 
-      // إذا كان المستخدم قد فعل الإشعارات سابقاً
-      // نعيد جدولة الـ30 يومًا من نفس GPS المحفوظ
       if (savedNotificationState &&
           prayerTimes != null) {
         final bool scheduled =
@@ -325,10 +303,6 @@ class _PrayerPageState extends State<PrayerPage> {
       }
     }
   }
-
-  // ============================================================
-  // تهيئة الإشعارات
-  // ============================================================
 
   Future<void> _initializeNotifications() async {
     tz.initializeTimeZones();
@@ -387,16 +361,11 @@ class _PrayerPageState extends State<PrayerPage> {
         ?.requestExactAlarmsPermission();
   }
 
-  // ============================================================
-  // الحصول على GPS الحقيقي
-  // ============================================================
-
   Future<bool> _tryGetCurrentLocation() async {
     final bool serviceEnabled =
         await Geolocator.isLocationServiceEnabled();
 
     if (!serviceEnabled) {
-      debugPrint('Location service is disabled');
       return false;
     }
 
@@ -413,41 +382,18 @@ class _PrayerPageState extends State<PrayerPage> {
             LocationPermission.denied ||
         permission ==
             LocationPermission.deniedForever) {
-      debugPrint('Location permission denied');
       return false;
     }
 
     try {
-      final Position currentPosition =
+      position =
           await Geolocator.getCurrentPosition(
         locationSettings:
             const LocationSettings(
           accuracy:
-              LocationAccuracy.high,
+              LocationAccuracy.medium,
         ),
       );
-
-      position = currentPosition;
-
-      // حفظ GPS الحقيقي
-      await _saveLocation(
-        currentPosition.latitude,
-        currentPosition.longitude,
-      );
-
-      // حساب المواقيت من GPS الحقيقي
-      _calculatePrayerTimes(
-        currentPosition.latitude,
-        currentPosition.longitude,
-      );
-
-      debugPrint(
-        'GPS saved: '
-        '${currentPosition.latitude}, '
-        '${currentPosition.longitude}',
-      );
-
-      return true;
     } catch (e) {
       debugPrint(
         'Location error: $e',
@@ -455,63 +401,46 @@ class _PrayerPageState extends State<PrayerPage> {
 
       return false;
     }
-  }
 
-  // ============================================================
-  // تحميل آخر GPS محفوظ
-  // ============================================================
+    await _saveLocation(
+      position!.latitude,
+      position!.longitude,
+    );
+
+    _calculatePrayerTimes(
+      position!.latitude,
+      position!.longitude,
+    );
+
+    return true;
+  }
 
   Future<bool> _loadSavedLocation() async {
     final SharedPreferences prefs =
         await SharedPreferences.getInstance();
 
     final double? latitude =
-        prefs.getDouble(savedLatitudeKey);
+        prefs.getDouble(
+      'saved_latitude',
+    );
 
     final double? longitude =
-        prefs.getDouble(savedLongitudeKey);
+        prefs.getDouble(
+      'saved_longitude',
+    );
 
     if (latitude == null ||
         longitude == null) {
-      debugPrint(
-        'No saved GPS location found',
-      );
-
       return false;
     }
-
-    // مهم:
-    // نضع الموقع المحفوظ داخل position أيضاً
-    // حتى تستخدمه جدولة الإشعارات نفسها.
-    position = Position(
-      latitude: latitude,
-      longitude: longitude,
-      timestamp: DateTime.now(),
-      accuracy: 0,
-      altitude: 0,
-      altitudeAccuracy: 0,
-      heading: 0,
-      headingAccuracy: 0,
-      speed: 0,
-      speedAccuracy: 0,
-    );
 
     _calculatePrayerTimes(
       latitude,
       longitude,
     );
 
-    debugPrint(
-      'Using saved GPS: '
-      '$latitude, $longitude',
-    );
-
     return prayerTimes != null;
   }
-
-  // ============================================================
-  // حفظ GPS
-  // ============================================================
 
   Future<void> _saveLocation(
     double latitude,
@@ -521,19 +450,15 @@ class _PrayerPageState extends State<PrayerPage> {
         await SharedPreferences.getInstance();
 
     await prefs.setDouble(
-      savedLatitudeKey,
+      'saved_latitude',
       latitude,
     );
 
     await prefs.setDouble(
-      savedLongitudeKey,
+      'saved_longitude',
       longitude,
     );
   }
-
-  // ============================================================
-  // حساب مواقيت الصلاة
-  // ============================================================
 
   void _calculatePrayerTimes(
     double latitude,
@@ -560,10 +485,6 @@ class _PrayerPageState extends State<PrayerPage> {
     );
   }
 
-  // ============================================================
-  // تحديث الموقع
-  // ============================================================
-
   Future<void> _refreshPrayerTimes() async {
     if (mounted) {
       setState(() {
@@ -571,57 +492,23 @@ class _PrayerPageState extends State<PrayerPage> {
       });
     }
 
-    // نحاول دائماً أخذ GPS جديد
     final bool success =
         await _tryGetCurrentLocation();
 
-    if (success) {
-      final SharedPreferences prefs =
-          await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        loading = false;
+        locationDisabled = !success;
+        usingSavedLocation = false;
+      });
 
-      final bool enabled =
-          prefs.getBool(
-                notificationEnabledKey,
-              ) ??
-              false;
-
-      if (enabled) {
-        await _schedulePrayerNotifications(
-          showMessage: false,
-        );
-      }
-
-      if (mounted) {
-        setState(() {
-          loading = false;
-          locationDisabled = false;
-          usingSavedLocation = false;
-        });
-
-        _showMessage(
-          texts['updated']!,
-        );
-      }
-    } else {
-      // إذا فشل GPS نستخدم آخر موقع محفوظ
-      final bool saved =
-          await _loadSavedLocation();
-
-      if (mounted) {
-        setState(() {
-          loading = false;
-          locationDisabled = true;
-          usingSavedLocation = saved;
-        });
-      }
-
-      if (saved) {
+      if (success) {
         final SharedPreferences prefs =
             await SharedPreferences.getInstance();
 
         final bool enabled =
             prefs.getBool(
-                  notificationEnabledKey,
+                  'prayer_notifications_enabled',
                 ) ??
                 false;
 
@@ -630,17 +517,28 @@ class _PrayerPageState extends State<PrayerPage> {
             showMessage: false,
           );
         }
-      } else {
+
         _showMessage(
-          texts['locationError']!,
+          texts['updated']!,
         );
+      } else {
+        final bool saved =
+            await _loadSavedLocation();
+
+        if (mounted) {
+          setState(() {
+            usingSavedLocation = saved;
+          });
+
+          if (!saved) {
+            _showMessage(
+              texts['locationError']!,
+            );
+          }
+        }
       }
     }
   }
-
-  // ============================================================
-  // اختبار الأذان
-  // ============================================================
 
   Future<void> _testAdhan() async {
     try {
@@ -690,19 +588,10 @@ class _PrayerPageState extends State<PrayerPage> {
     }
   }
 
-  // ============================================================
-  // جدولة إشعارات 30 يوم
-  // ============================================================
-
   Future<bool> _schedulePrayerNotifications({
     bool showMessage = true,
   }) async {
-    if (prayerTimes == null ||
-        position == null) {
-      debugPrint(
-        'Cannot schedule: no GPS location',
-      );
-
+    if (prayerTimes == null) {
       return false;
     }
 
@@ -740,29 +629,14 @@ class _PrayerPageState extends State<PrayerPage> {
       return false;
     }
 
-    // حذف الجدولة القديمة
     await notifications.cancelAll();
-
-    // ==========================================================
-    // هذا هو GPS المستخدم فعلياً
-    // وليس موقعاً عشوائياً.
-    // ==========================================================
-
-    final double latitude =
-        position!.latitude;
-
-    final double longitude =
-        position!.longitude;
 
     final Coordinates coordinates =
         Coordinates(
-      latitude,
-      longitude,
-    );
-
-    debugPrint(
-      'Scheduling prayers for GPS: '
-      '$latitude, $longitude',
+      position?.latitude ??
+          prayerTimes!.coordinates.latitude,
+      position?.longitude ??
+          prayerTimes!.coordinates.longitude,
     );
 
     final CalculationParameters params =
@@ -777,10 +651,6 @@ class _PrayerPageState extends State<PrayerPage> {
         DateTime.now();
 
     int notificationId = 100;
-
-    // ==========================================================
-    // 30 يوم
-    // ==========================================================
 
     for (int day = 0; day < 30; day++) {
       final DateTime date =
@@ -841,7 +711,7 @@ class _PrayerPageState extends State<PrayerPage> {
         await SharedPreferences.getInstance();
 
     await prefs.setBool(
-      notificationEnabledKey,
+      'prayer_notifications_enabled',
       true,
     );
 
@@ -859,10 +729,6 @@ class _PrayerPageState extends State<PrayerPage> {
 
     return true;
   }
-
-  // ============================================================
-  // جدولة إشعار صلاة واحد مع صوت الأذان
-  // ============================================================
 
   Future<void> _scheduleOnePrayer(
     _PrayerNotificationData prayer,
@@ -889,31 +755,20 @@ class _PrayerPageState extends State<PrayerPage> {
       return;
     }
 
-    // ==========================================================
-    // صوت الأذان
-    //
-    // يجب أن يكون الملف:
-    //
-    // android/app/src/main/res/raw/beautiful_adhan.ogg
-    //
-    // بدون حرف كبير وبدون مسافات.
-    // ==========================================================
-
     const AndroidNotificationDetails
         androidDetails =
         AndroidNotificationDetails(
-      adhanChannelId,
-      'Prayer Adhan',
+      'prayer_times',
+      'Prayer Times',
       channelDescription:
-          'Adhan notifications for prayer times',
+          'Notifications for Islamic prayer times',
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
-
       sound:
           RawResourceAndroidNotificationSound(
-        'beautiful_adhan',
+        'adhan',
       ),
     );
 
@@ -922,21 +777,22 @@ class _PrayerPageState extends State<PrayerPage> {
       android: androidDetails,
     );
 
+    // ============================================================
+    // تم إصلاح هذا الاستدعاء:
+    // النسخة الموجودة عندك من flutter_local_notifications
+    // تتطلب أول 5 معاملات بشكل positional.
+    // ============================================================
+
     await notifications.zonedSchedule(
-      id: prayer.id,
-      title: prayer.name,
-      body: prayer.name,
-      scheduledDate: scheduledDate,
-      notificationDetails: details,
+      prayer.id,
+      prayer.name,
+      prayer.name,
+      scheduledDate,
+      details,
       androidScheduleMode:
-          AndroidScheduleMode
-              .exactAllowWhileIdle,
+          AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
-
-  // ============================================================
-  // إيقاف الإشعارات
-  // ============================================================
 
   Future<void> _disablePrayerNotifications() async {
     await notifications.cancelAll();
@@ -945,7 +801,7 @@ class _PrayerPageState extends State<PrayerPage> {
         await SharedPreferences.getInstance();
 
     await prefs.setBool(
-      notificationEnabledKey,
+      'prayer_notifications_enabled',
       false,
     );
 
@@ -960,10 +816,6 @@ class _PrayerPageState extends State<PrayerPage> {
     }
   }
 
-  // ============================================================
-  // رسالة
-  // ============================================================
-
   void _showMessage(
     String message,
   ) {
@@ -976,10 +828,6 @@ class _PrayerPageState extends State<PrayerPage> {
       ),
     );
   }
-
-  // ============================================================
-  // تنسيق الوقت
-  // ============================================================
 
   String _formatTime(
     DateTime time,
@@ -996,10 +844,6 @@ class _PrayerPageState extends State<PrayerPage> {
 
     return '$hour:$minute';
   }
-
-  // ============================================================
-  // الواجهة
-  // ============================================================
 
   @override
   Widget build(
@@ -1136,10 +980,6 @@ class _PrayerPageState extends State<PrayerPage> {
     );
   }
 
-  // ============================================================
-  // بطاقة اختبار الأذان
-  // ============================================================
-
   Widget _buildAdhanTestCard() {
     final Map<String, String> t =
         texts;
@@ -1181,11 +1021,9 @@ class _PrayerPageState extends State<PrayerPage> {
               size: 27,
             ),
           ),
-
           const SizedBox(
             width: 14,
           ),
-
           Expanded(
             child: Text(
               isPlayingAdhan
@@ -1201,7 +1039,6 @@ class _PrayerPageState extends State<PrayerPage> {
               ),
             ),
           ),
-
           ElevatedButton(
             onPressed:
                 _testAdhan,
@@ -1237,10 +1074,6 @@ class _PrayerPageState extends State<PrayerPage> {
       ),
     );
   }
-
-  // ============================================================
-  // الموقع المحفوظ
-  // ============================================================
 
   Widget _buildSavedLocationMessage() {
     return Container(
@@ -1290,10 +1123,6 @@ class _PrayerPageState extends State<PrayerPage> {
       ),
     );
   }
-
-  // ============================================================
-  // بطاقة مواقيت الصلاة
-  // ============================================================
 
   Widget _buildPrayerTimesCard() {
     final Map<String, String> t =
@@ -1458,10 +1287,6 @@ class _PrayerPageState extends State<PrayerPage> {
     );
   }
 
-  // ============================================================
-  // بطاقة الإشعارات
-  // ============================================================
-
   Widget _buildNotificationCard() {
     final Map<String, String> t =
         texts;
@@ -1557,10 +1382,6 @@ class _PrayerPageState extends State<PrayerPage> {
     );
   }
 
-  // ============================================================
-  // البطاقات الأخرى
-  // ============================================================
-
   Widget _sectionCard(
     IconData icon,
     String title,
@@ -1650,10 +1471,6 @@ class _PrayerPageState extends State<PrayerPage> {
     );
   }
 }
-
-// ================================================================
-// بيانات إشعار الصلاة
-// ================================================================
 
 class _PrayerNotificationData {
   final int id;
